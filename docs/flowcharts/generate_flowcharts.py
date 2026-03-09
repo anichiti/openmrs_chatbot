@@ -1,0 +1,585 @@
+"""
+Generate two architecture flowcharts for the OpenMRS Clinical Chatbot project.
+
+Flowchart 1: OpenMRS Clinical Chatbot: An Intelligent Agent-Based Architecture
+             for Pediatric Clinical Decision Support
+
+Flowchart 2: OpenMRS-Integrated Chatbot for Pediatric Care: A Knowledge-Source
+             Framework for Clinical Query Scenario Classification
+"""
+
+import os
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import matplotlib.patheffects as pe
+
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper utilities
+# ─────────────────────────────────────────────────────────────────────────────
+
+def rounded_box(ax, x, y, width, height, text, facecolor, edgecolor='#333333',
+                fontsize=9, text_color='white', bold=False, radius=0.015,
+                linewidth=1.4, zorder=3, wrap_width=None):
+    """Draw a rounded rectangle with centred text."""
+    fancy = FancyBboxPatch(
+        (x - width / 2, y - height / 2), width, height,
+        boxstyle=f"round,pad={radius}",
+        linewidth=linewidth, edgecolor=edgecolor,
+        facecolor=facecolor, zorder=zorder
+    )
+    ax.add_patch(fancy)
+    weight = 'bold' if bold else 'normal'
+    ax.text(x, y, text, ha='center', va='center',
+            fontsize=fontsize, color=text_color, weight=weight,
+            zorder=zorder + 1,
+            wrap=True,
+            multialignment='center')
+
+
+def diamond(ax, x, y, width, height, text, facecolor, edgecolor='#333333',
+            fontsize=8.5, text_color='white', zorder=3):
+    """Draw a diamond shape with centred text."""
+    dx, dy = width / 2, height / 2
+    xs = [x, x + dx, x, x - dx, x]
+    ys = [y + dy, y, y - dy, y, y + dy]
+    ax.fill(xs, ys, color=facecolor, zorder=zorder, linewidth=1.4,
+            edgecolor=edgecolor)
+    ax.text(x, y, text, ha='center', va='center',
+            fontsize=fontsize, color=text_color, weight='bold',
+            zorder=zorder + 1, multialignment='center')
+
+
+def arrow(ax, x1, y1, x2, y2, color='#555555', lw=1.5, head=10, zorder=2):
+    """Draw an annotated arrow between two points."""
+    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle=f'->', color=color,
+                                lw=lw, mutation_scale=head),
+                zorder=zorder)
+
+
+def label_arrow(ax, x1, y1, x2, y2, label, color='#555555', lw=1.5,
+                fontsize=7.5, zorder=2):
+    """Draw an arrow with a small label at midpoint."""
+    arrow(ax, x1, y1, x2, y2, color=color, lw=lw, zorder=zorder)
+    mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+    ax.text(mx + 0.01, my, label, ha='left', va='center',
+            fontsize=fontsize, color=color, style='italic', zorder=zorder + 1)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Colour palette
+# ─────────────────────────────────────────────────────────────────────────────
+C = {
+    'user':       '#2E4057',  # dark navy  – user
+    'triage':     '#048A81',  # teal       – triage / routing
+    'agent':      '#1565C0',  # blue       – specialised agents
+    'data':       '#6A1B9A',  # purple     – data layer
+    'validation': '#B71C1C',  # dark red   – validation / safety
+    'response':   '#1B5E20',  # dark green – response
+    'output':     '#4E342E',  # brown      – output
+    'ped':        '#E65100',  # deep orange – paediatric features
+    'bg':         '#F5F5F5',
+    'panel':      '#ECEFF1',
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FLOWCHART 1 – Agent-Based Architecture
+# ─────────────────────────────────────────────────────────────────────────────
+
+def make_flowchart1():
+    fig, ax = plt.subplots(figsize=(18, 26))
+    fig.patch.set_facecolor(C['bg'])
+    ax.set_facecolor(C['bg'])
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+
+    # ── Title ────────────────────────────────────────────────────────────────
+    ax.text(0.5, 0.975,
+            'OpenMRS Clinical Chatbot:\nAn Intelligent Agent-Based Architecture\n'
+            'for Pediatric Clinical Decision Support',
+            ha='center', va='top', fontsize=15, weight='bold',
+            color='#1A237E', multialignment='center')
+
+    # ── Row y-coordinates (top → bottom) ────────────────────────────────────
+    y_user   = 0.905
+    y_triage = 0.820
+    y_router = 0.745
+    y_agents = 0.640   # row of specialised agent boxes
+    y_data   = 0.495   # data layer boxes
+    y_val    = 0.390
+    y_resp   = 0.295
+    y_out    = 0.195
+    y_ped    = 0.090   # paediatric feature band
+
+    BW  = 0.13   # box width
+    BH  = 0.048  # box height (standard)
+    BHT = 0.055  # box height (tall)
+
+    # ── USER INPUT ───────────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_user, 0.30, BH,
+                'USER INPUT\n(Doctor  |  Patient  |  Parent)',
+                C['user'], bold=True, fontsize=10)
+
+    # ── TRIAGE AGENT ────────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_triage, 0.46, BHT,
+                'TRIAGE AGENT\n'
+                '• Intent Classification (11 categories)\n'
+                '• User Role Detection (Doctor / Patient)\n'
+                '• Entity Extraction (Patient ID, Drug, Vaccine)',
+                C['triage'], bold=False, fontsize=8.5)
+    arrow(ax, 0.5, y_user - BH/2, 0.5, y_triage + BHT/2)
+
+    # ── INTENT ROUTER ───────────────────────────────────────────────────────
+    diamond(ax, 0.5, y_router, 0.28, 0.060,
+            'INTENT ROUTER\n(Select Specialised Agent)',
+            C['triage'])
+    arrow(ax, 0.5, y_triage - BHT/2, 0.5, y_router + 0.030)
+
+    # ── SPECIALISED AGENT BOXES ─────────────────────────────────────────────
+    agents = [
+        (0.09, 'MEDICATION\nAGENT\n• Dosage\n• Interactions\n• Administration'),
+        (0.25, 'ALLERGY\nAGENT\n• Drug-Allergy\n  Checks\n• Contraindications'),
+        (0.41, 'IMMUNIZATION\nAGENT\n• Vaccine History\n• Next Dose\n• Schedules'),
+        (0.59, 'VITALS\nAGENT\n• SQL Queries\n• BMI Calc\n• Observations'),
+        (0.75, 'PATIENT\nRECORD\nAGENT\n• Full Profile\n• Demographics'),
+        (0.91, 'HYBRID\nAGENT\n• Multi-Intent\n• Combined\n  Queries'),
+    ]
+    agent_bh = 0.110
+    for ax_x, txt in agents:
+        rounded_box(ax, ax_x, y_agents, BW, agent_bh, txt,
+                    C['agent'], fontsize=7.8)
+        # arrow from diamond bottom to agent top
+        # (approximate: diamond tip → agent box)
+        ax.annotate('', xy=(ax_x, y_agents + agent_bh/2),
+                    xytext=(0.5, y_router - 0.030),
+                    arrowprops=dict(arrowstyle='->', color='#555555',
+                                   lw=1.2, mutation_scale=8,
+                                   connectionstyle='arc3,rad=0.0'),
+                    zorder=2)
+
+    # ── DATA RETRIEVAL LAYER ────────────────────────────────────────────────
+    # panel background
+    panel = FancyBboxPatch((0.03, y_data - 0.075), 0.94, 0.135,
+                           boxstyle='round,pad=0.01',
+                           linewidth=1.5, edgecolor='#9E9E9E',
+                           facecolor=C['panel'], zorder=1)
+    ax.add_patch(panel)
+    ax.text(0.5, y_data + 0.055, 'DATA RETRIEVAL LAYER',
+            ha='center', va='center', fontsize=9, weight='bold',
+            color='#4A148C', zorder=4)
+
+    data_sources = [
+        (0.14, 'OpenMRS MySQL DB\n(patient, orders,\nobs, allergy,\nimmunization)'),
+        (0.35, 'JSON Knowledge Bases\n(drug_knowledge_base,\nimmunization,\nmilestones)'),
+        (0.57, 'ChromaDB\nVector Store\n(WHO Guidelines,\nCDC PDFs)'),
+        (0.79, 'External APIs\n(RxNorm API\nFDA API)'),
+    ]
+    data_bh = 0.082
+    for dx, txt in data_sources:
+        rounded_box(ax, dx, y_data - 0.008, 0.18, data_bh, txt,
+                    C['data'], fontsize=8)
+
+    # arrows: each agent → data layer panel
+    for ax_x, _ in agents:
+        arrow(ax, ax_x, y_agents - agent_bh/2,
+              ax_x, y_data + 0.065, lw=1.1, head=7)
+
+    # ── VALIDATION AGENT ────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_val, 0.50, BHT,
+                'VALIDATION AGENT  (Safety Layer)\n'
+                '• Verify data existence  •  Prevent hallucinations\n'
+                '• Check database connections  •  Validate patient IDs\n'
+                '• Ensure no empty / unsafe responses',
+                C['validation'], bold=False, fontsize=8.5)
+    arrow(ax, 0.5, y_data - 0.075, 0.5, y_val + BHT/2)
+
+    # ── RESPONSE AGENT ──────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_resp, 0.46, BHT,
+                'RESPONSE AGENT  (Role-Based Formatting)\n'
+                '• Doctor View: Clinical detail, drug IDs, safety alerts\n'
+                '• Patient / Parent View: Simplified, plain language',
+                C['response'], bold=False, fontsize=8.5)
+    arrow(ax, 0.5, y_val - BHT/2, 0.5, y_resp + BHT/2)
+
+    # ── OUTPUT ──────────────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_out, 0.34, BH,
+                'OUTPUT\n(Formatted JSON  |  Audit Log  |  responses.json)',
+                C['output'], bold=True, fontsize=9)
+    arrow(ax, 0.5, y_resp - BHT/2, 0.5, y_out + BH/2)
+
+    # ── PAEDIATRIC FEATURES BAND ────────────────────────────────────────────
+    ped_panel = FancyBboxPatch((0.03, y_ped - 0.035), 0.94, 0.082,
+                               boxstyle='round,pad=0.01',
+                               linewidth=1.5, edgecolor='#BF360C',
+                               facecolor='#FBE9E7', zorder=1)
+    ax.add_patch(ped_panel)
+    ax.text(0.5, y_ped + 0.030,
+            'PAEDIATRIC CLINICAL DECISION SUPPORT FEATURES',
+            ha='center', va='center', fontsize=9, weight='bold',
+            color=C['ped'], zorder=4)
+    ped_items = [
+        '• Age-Based & Weight-Based\n  Drug Dosage Calculation',
+        '• Immunization Schedule\n  Tracking & Next-Dose Prediction',
+        '• Developmental Milestone\n  Assessment (CDC / WHO)',
+        '• Drug–Allergy Safety Checks\n  & Contraindication Alerts',
+        '• BMI Percentile Calculation\n  (Age-Adjusted for Children)',
+    ]
+    for i, txt in enumerate(ped_items):
+        ax.text(0.09 + i * 0.185, y_ped - 0.004, txt,
+                ha='center', va='center', fontsize=7.4,
+                color='#BF360C', zorder=4, multialignment='center')
+
+    # ── LEGEND ──────────────────────────────────────────────────────────────
+    legend_x, legend_y = 0.71, 0.162
+    legend_items = [
+        (C['user'],       'User Interaction Layer'),
+        (C['triage'],     'Triage & Routing'),
+        (C['agent'],      'Specialised Agents'),
+        (C['data'],       'Data Sources'),
+        (C['validation'], 'Validation & Safety'),
+        (C['response'],   'Response Generation'),
+        (C['ped'],        'Paediatric Features'),
+    ]
+    ax.text(legend_x, legend_y + 0.008, 'LEGEND', fontsize=8,
+            weight='bold', color='#333333', va='bottom')
+    for i, (color, label) in enumerate(legend_items):
+        ly = legend_y - 0.022 * (i + 1)
+        rect = FancyBboxPatch((legend_x, ly - 0.007), 0.022, 0.014,
+                              boxstyle='round,pad=0.002',
+                              facecolor=color, edgecolor='#333333',
+                              linewidth=0.8, zorder=5)
+        ax.add_patch(rect)
+        ax.text(legend_x + 0.028, ly, label,
+                va='center', fontsize=7.5, color='#333333', zorder=5)
+
+    plt.tight_layout(pad=0.3)
+    out_path = os.path.join(OUTPUT_DIR, 'flowchart1_agent_architecture.png')
+    fig.savefig(out_path, dpi=150, bbox_inches='tight',
+                facecolor=C['bg'], edgecolor='none')
+    plt.close(fig)
+    print(f'Saved: {out_path}')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FLOWCHART 2 – Knowledge-Source / Query Classification Framework
+# ─────────────────────────────────────────────────────────────────────────────
+
+def make_flowchart2():
+    fig, ax = plt.subplots(figsize=(20, 24))
+    fig.patch.set_facecolor(C['bg'])
+    ax.set_facecolor(C['bg'])
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+
+    # ── Title ────────────────────────────────────────────────────────────────
+    ax.text(0.5, 0.975,
+            'OpenMRS-Integrated Chatbot for Pediatric Care:\n'
+            'A Knowledge-Source Framework for\nClinical Query Scenario Classification',
+            ha='center', va='top', fontsize=15, weight='bold',
+            color='#1A237E', multialignment='center')
+
+    # ── Colour overrides for this chart ─────────────────────────────────────
+    COL = {
+        'input':   '#2E4057',
+        'triage':  '#00695C',
+        'class':   '#1565C0',
+        'omrs':    '#6A1B9A',
+        'json':    '#00838F',
+        'chroma':  '#4527A0',
+        'api':     '#558B2F',
+        'header':  '#37474F',
+        'arrow':   '#546E7A',
+        'panel_omrs':   '#F3E5F5',
+        'panel_json':   '#E0F7FA',
+        'panel_chroma': '#EDE7F6',
+        'panel_api':    '#F1F8E9',
+    }
+
+    # ─── Row y-positions ────────────────────────────────────────────────────
+    y_title_bar  = 0.906
+    y_input      = 0.848
+    y_triage     = 0.775
+    y_classifier = 0.700
+
+    # 11 query scenarios arranged in two columns
+    scenario_top_y  = 0.630
+    scenario_row_h  = 0.054
+    n_scenarios     = 11
+    col_xs          = [0.25, 0.75]   # left / right column x centres
+    scenario_w      = 0.43
+    scenario_h      = 0.042
+
+    # Knowledge-source panels below scenarios
+    ks_top_y    = 0.010
+    ks_panel_h  = 0.270
+    ks_top      = ks_top_y + ks_panel_h   # y of panel top edge
+
+    # ── Section header band ──────────────────────────────────────────────────
+    hdr = FancyBboxPatch((0.0, y_title_bar - 0.012), 1.0, 0.024,
+                         boxstyle='square,pad=0',
+                         facecolor='#1A237E', edgecolor='none', zorder=1)
+    ax.add_patch(hdr)
+    ax.text(0.5, y_title_bar, 'KNOWLEDGE-SOURCE FRAMEWORK  ×  CLINICAL QUERY CLASSIFICATION',
+            ha='center', va='center', fontsize=9.5, color='white',
+            weight='bold', zorder=2)
+
+    # ── USER INPUT ───────────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_input, 0.30, 0.044,
+                'CLINICAL QUERY  (Natural Language Input)',
+                COL['input'], bold=True, fontsize=10)
+
+    # ── TRIAGE AGENT ────────────────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_triage, 0.50, 0.050,
+                'TRIAGE AGENT\n'
+                'Keyword Matching  •  LLM (Ollama/llama2)  •  Confidence Scoring',
+                COL['triage'], fontsize=9)
+    arrow(ax, 0.5, y_input - 0.022, 0.5, y_triage + 0.025,
+          color=COL['arrow'])
+
+    # ── INTENT CLASSIFIER label ──────────────────────────────────────────────
+    rounded_box(ax, 0.5, y_classifier, 0.36, 0.040,
+                'CLINICAL QUERY SCENARIO CLASSIFIER\n'
+                '(Returns: intent, user_role, patient_id, confidence)',
+                COL['class'], fontsize=8.5)
+    arrow(ax, 0.5, y_triage - 0.025, 0.5, y_classifier + 0.020,
+          color=COL['arrow'])
+
+    # ── QUERY SCENARIOS ──────────────────────────────────────────────────────
+    scenarios = [
+        # (label, description, mapped knowledge sources colour)
+        ('MEDICATION_QUERY',
+         'Drug dosage, side effects, dosing frequency',
+         '#1565C0'),
+        ('MEDICATION_INFO_QUERY',
+         'Current prescribed medications for patient',
+         '#1565C0'),
+        ('MEDICATION_ADMINISTRATION_QUERY',
+         'How to administer / give a medication',
+         '#1565C0'),
+        ('MEDICATION_SIDE_EFFECTS_QUERY',
+         'Adverse effects, toxicity, reactions',
+         '#1565C0'),
+        ('MEDICATION_EMERGENCY_QUERY',
+         'Overdose, missed dose — HIGH PRIORITY',
+         '#C62828'),
+        ('MEDICATION_COMPATIBILITY_QUERY',
+         'Drug–drug interactions, simultaneous use',
+         '#1565C0'),
+        ('ALLERGY_QUERY',
+         'Drug-allergy contraindication checks',
+         '#6A1B9A'),
+        ('IMMUNIZATION_QUERY',
+         'Vaccination history, next dose, schedules',
+         '#00838F'),
+        ('VITALS_QUERY',
+         'Vital signs, BMI, weight, height, BP',
+         '#4527A0'),
+        ('PATIENT_RECORD_QUERY',
+         'Full demographic & clinical profile',
+         '#37474F'),
+        ('HYBRID_QUERY',
+         'Multi-intent — combined knowledge sources',
+         '#E65100'),
+    ]
+
+    # Draw two-column grid of scenarios
+    ax.text(0.5, scenario_top_y + 0.025,
+            'QUERY SCENARIO CATEGORIES',
+            ha='center', va='center', fontsize=9, weight='bold',
+            color=C['triage'])
+    arrow(ax, 0.5, y_classifier - 0.020, 0.5, scenario_top_y + 0.013,
+          color=COL['arrow'])
+
+    for i, (intent, desc, color) in enumerate(scenarios):
+        col  = i % 2          # 0 = left, 1 = right
+        row  = i // 2
+        sx   = col_xs[col]
+        sy   = scenario_top_y - 0.014 - row * scenario_row_h
+        txt  = f'{intent}\n{desc}'
+        rounded_box(ax, sx, sy, scenario_w, scenario_h, txt,
+                    color, fontsize=7.8, radius=0.010)
+
+    # ── KNOWLEDGE SOURCE PANELS ──────────────────────────────────────────────
+    ks_panel_y_bottom = ks_top_y
+    ks_panel_top = ks_top_y + ks_panel_h
+
+    # Section header
+    ax.text(0.5, ks_panel_top + 0.012,
+            'KNOWLEDGE SOURCES',
+            ha='center', va='center', fontsize=10, weight='bold',
+            color='#1A237E')
+
+    # Draw four KS panels side by side
+    panel_w  = 0.215
+    panel_xs = [0.110, 0.335, 0.560, 0.785]
+    panel_h  = 0.235
+
+    # ── OpenMRS MySQL DB ────────────────────────────────────────────────────
+    p1 = FancyBboxPatch((panel_xs[0] - panel_w/2, ks_panel_y_bottom),
+                        panel_w, panel_h,
+                        boxstyle='round,pad=0.008',
+                        facecolor=COL['panel_omrs'], edgecolor=COL['omrs'],
+                        linewidth=1.8, zorder=2)
+    ax.add_patch(p1)
+    ax.text(panel_xs[0], ks_panel_y_bottom + panel_h - 0.018,
+            'OpenMRS MySQL DB', ha='center', va='top',
+            fontsize=9, weight='bold', color=COL['omrs'], zorder=3)
+    omrs_lines = [
+        'patient  – demographics',
+        'person   – DOB, gender',
+        'orders   – active medications',
+        'obs      – vitals (weight, BP…)',
+        'allergy  – allergies + severity',
+        'immunization – vaccine history',
+        '',
+        'Queries: MEDICATION_INFO,',
+        'ALLERGY, IMMUNIZATION,',
+        'VITALS, PATIENT_RECORD,',
+        'HYBRID',
+    ]
+    ax.text(panel_xs[0], ks_panel_y_bottom + panel_h - 0.036,
+            '\n'.join(omrs_lines),
+            ha='center', va='top', fontsize=7.2,
+            color='#4A148C', zorder=3, multialignment='center',
+            linespacing=1.4)
+
+    # ── JSON Knowledge Bases ────────────────────────────────────────────────
+    p2 = FancyBboxPatch((panel_xs[1] - panel_w/2, ks_panel_y_bottom),
+                        panel_w, panel_h,
+                        boxstyle='round,pad=0.008',
+                        facecolor=COL['panel_json'], edgecolor=COL['json'],
+                        linewidth=1.8, zorder=2)
+    ax.add_patch(p2)
+    ax.text(panel_xs[1], ks_panel_y_bottom + panel_h - 0.018,
+            'JSON Knowledge Bases', ha='center', va='top',
+            fontsize=9, weight='bold', color=COL['json'], zorder=3)
+    json_lines = [
+        'drug_knowledge_base.json',
+        '  • Indications & dosing',
+        '  • Contraindications',
+        '  • Paediatric mg/kg doses',
+        '  • Drug interactions',
+        '',
+        'immunization.json',
+        '  • Vaccine schedules',
+        '  • Dose intervals',
+        '',
+        'milestones.json',
+        '  • Developmental milestones',
+        '',
+        'Queries: MEDICATION_*,',
+        'IMMUNIZATION, HYBRID',
+    ]
+    ax.text(panel_xs[1], ks_panel_y_bottom + panel_h - 0.036,
+            '\n'.join(json_lines),
+            ha='center', va='top', fontsize=7.0,
+            color='#006064', zorder=3, multialignment='center',
+            linespacing=1.35)
+
+    # ── ChromaDB Vector Store ────────────────────────────────────────────────
+    p3 = FancyBboxPatch((panel_xs[2] - panel_w/2, ks_panel_y_bottom),
+                        panel_w, panel_h,
+                        boxstyle='round,pad=0.008',
+                        facecolor=COL['panel_chroma'], edgecolor=COL['chroma'],
+                        linewidth=1.8, zorder=2)
+    ax.add_patch(p3)
+    ax.text(panel_xs[2], ks_panel_y_bottom + panel_h - 0.018,
+            'ChromaDB Vector Store', ha='center', va='top',
+            fontsize=9, weight='bold', color=COL['chroma'], zorder=3)
+    chroma_lines = [
+        'Indexed PDF documents',
+        '(Semantic RAG retrieval)',
+        '',
+        'Doctor KB:',
+        '  • WHO Essential Medicines',
+        '    2023 List (PDF)',
+        '  • CDC Milestone Checklists',
+        '',
+        'Patient KB:',
+        '  • CDC Milestone Checklists',
+        '    (parent-friendly)',
+        '',
+        'Queries: MEDICATION_QUERY,',
+        'MEDICATION_EMERGENCY,',
+        'HYBRID',
+    ]
+    ax.text(panel_xs[2], ks_panel_y_bottom + panel_h - 0.036,
+            '\n'.join(chroma_lines),
+            ha='center', va='top', fontsize=7.0,
+            color='#311B92', zorder=3, multialignment='center',
+            linespacing=1.35)
+
+    # ── External APIs ────────────────────────────────────────────────────────
+    p4 = FancyBboxPatch((panel_xs[3] - panel_w/2, ks_panel_y_bottom),
+                        panel_w, panel_h,
+                        boxstyle='round,pad=0.008',
+                        facecolor=COL['panel_api'], edgecolor=COL['api'],
+                        linewidth=1.8, zorder=2)
+    ax.add_patch(p4)
+    ax.text(panel_xs[3], ks_panel_y_bottom + panel_h - 0.018,
+            'External APIs', ha='center', va='top',
+            fontsize=9, weight='bold', color=COL['api'], zorder=3)
+    api_lines = [
+        'RxNorm API',
+        '  • Drug name normalisation',
+        '  • Drug concept IDs',
+        '  • Interaction data',
+        '',
+        'FDA API',
+        '  • Drug labelling data',
+        '  • Adverse event reports',
+        '  • Drug recalls',
+        '',
+        'Queries:',
+        'MEDICATION_COMPATIBILITY,',
+        'MEDICATION_EMERGENCY,',
+        'HYBRID',
+    ]
+    ax.text(panel_xs[3], ks_panel_y_bottom + panel_h - 0.036,
+            '\n'.join(api_lines),
+            ha='center', va='top', fontsize=7.0,
+            color='#33691E', zorder=3, multialignment='center',
+            linespacing=1.35)
+
+    # ── Arrows from scenario grid to KS panels ───────────────────────────────
+    # Bottom of scenario grid → top of KS panels
+    scenario_bottom_y = scenario_top_y - 0.014 - (n_scenarios // 2) * scenario_row_h - scenario_h / 2
+    ks_panel_top_y = ks_panel_y_bottom + panel_h
+
+    mapping_y = (scenario_bottom_y + ks_panel_top_y) / 2
+
+    ax.text(0.5, mapping_y + 0.012,
+            '▼  Each query scenario is mapped to its primary knowledge source(s)  ▼',
+            ha='center', va='center', fontsize=8.5, style='italic',
+            color='#37474F')
+
+    for px in panel_xs:
+        arrow(ax, px, ks_panel_top_y,
+              px, scenario_bottom_y + 0.008,
+              color=COL['arrow'], lw=1.5, head=9)
+
+    plt.tight_layout(pad=0.3)
+    out_path = os.path.join(OUTPUT_DIR, 'flowchart2_knowledge_classification.png')
+    fig.savefig(out_path, dpi=150, bbox_inches='tight',
+                facecolor=C['bg'], edgecolor='none')
+    plt.close(fig)
+    print(f'Saved: {out_path}')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Entry point
+# ─────────────────────────────────────────────────────────────────────────────
+
+if __name__ == '__main__':
+    make_flowchart1()
+    make_flowchart2()
+    print('Both flowcharts generated successfully.')
