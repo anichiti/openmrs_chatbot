@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: chatbot-dev
+      MYSQL_USER: openmrs
+      MYSQL_PASSWORD: openmrs
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uopenmrs", "-popenmrs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chatbot:
+    build: .
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: chatbot-dev
+      DB_USER: openmrs
+      DB_PASSWORD: openmrs
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: gpt-4-turbo
+      EMBEDDING_MODEL: text-embedding-3-small
+      LOG_LEVEL: INFO
+    volumes:
+      - ./knowledge_base:/app/knowledge_base
+      - ./logs:/app/logs
+      - ./responses.json:/app/responses.json
+    depends_on:
+      mysql:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+volumes:
+  mysql_data:

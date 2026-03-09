@@ -1,0 +1,641 @@
+{
+  "knowledge_group": "analgesics_antipyretics_nsaids",
+  "description": "Pediatric medications - Analgesics, Antipyretics, NSAIDs",
+
+  "pediatric_age_groups": {
+    "neonate": {
+      "min_days": 0,
+      "max_days": 28
+    },
+    "infant": {
+      "min_months": 1,
+      "max_months": 12
+    },
+    "child": {
+      "min_years": 1,
+      "max_years": 12
+    }
+  },
+
+  "pain_management_principles": {
+    "model": "WHO Analgesic Ladder",
+    "steps": [
+      {
+        "pain_level": "mild",
+        "treatment": "Non-opioid ± NSAID ± adjuvant"
+      },
+      {
+        "pain_level": "moderate",
+        "treatment": "Mild opioid + non-opioid ± NSAID ± adjuvant"
+      },
+      {
+        "pain_level": "severe",
+        "treatment": "Strong opioid + non-opioid ± NSAID ± adjuvant"
+      }
+    ],
+    "note": "Non-drug strategies are important in pediatric pain management"
+  },
+
+  "drugs": [
+    {
+      "drug_name": "ibuprofen",
+      "atc_code": "M01AE01",
+      "category": "NSAID",
+
+      "age_restriction": {
+        "minimum_age_months": 3
+      },
+
+      "indications": [
+        "Mild pain",
+        "Moderate pain"
+      ],
+
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Asthma triggered by NSAIDs",
+        "Active peptic ulcer",
+        "GI bleeding",
+        "Severe renal failure",
+        "Severe hepatic failure",
+        "Severe cardiac failure"
+      ],
+
+      "precautions": [
+        "Asthma",
+        "Cardiac disease",
+        "Dehydration",
+        "Bleeding risk medications",
+        "Previous peptic ulcer",
+        "Coagulation disorders",
+        "Renal impairment",
+        "Hepatic impairment"
+      ],
+
+      "dose": {
+        "calculation_type": "weight_based",
+
+        "infant_child_over_3_months": {
+          "mg_per_kg_range": [5, 10],
+          "frequency_per_day_range": [3, 4],
+          "max_daily_mg_per_kg": 40,
+          "route": "oral",
+          "administration_note": "Give with or after food"
+        }
+      },
+
+      "renal_impairment": {
+        "mild": "Use lowest effective dose and monitor renal function",
+        "moderate_severe": "Avoid"
+      },
+
+      "hepatic_impairment": {
+        "guidance": "Use with caution",
+        "severe": "Avoid"
+      },
+
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Diarrhea",
+          "Dyspepsia",
+          "Headache",
+          "Dizziness",
+          "Fluid retention",
+          "Hypertension",
+          "GI ulceration",
+          "GI bleeding"
+        ],
+        "uncommon": [
+          "Rash",
+          "Photosensitivity",
+          "Renal impairment"
+        ],
+        "rare": [
+          "Angioedema",
+          "Bronchospasm",
+          "Hepatic damage",
+          "Pancreatitis",
+          "Visual disturbances",
+          "Stevens-Johnson syndrome",
+          "Toxic epidermal necrolysis"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "paracetamol",
+      "aliases": ["acetaminophen"],
+      "atc_code": "N02BE01",
+      "category": "Non-opioid analgesic / antipyretic",
+
+      "indications": [
+        "Mild pain",
+        "Moderate pain",
+        "Fever"
+      ],
+
+      "precautions": [
+        "Hepatic impairment",
+        "Renal impairment",
+        "Overdose risk"
+      ],
+
+      "dose": {
+        "calculation_type": "weight_based",
+
+        "neonate": {
+          "mg_per_kg": 10,
+          "frequency_hours_range": [6, 8],
+          "max_doses_per_day": 4
+        },
+
+        "infant_child": {
+          "mg_per_kg": 15,
+          "max_single_dose_mg": 1000,
+          "frequency_hours_range": [4, 6],
+          "max_doses_per_day": 4,
+          "max_daily_mg": 4000
+        }
+      },
+
+      "age_notes": [
+        "Infants under 3 months only under medical advice"
+      ],
+
+      "adverse_effects": {
+        "rare": [
+          "Rash",
+          "Hypersensitivity",
+          "Neutropenia",
+          "Thrombocytopenia",
+          "Pancytopenia"
+        ],
+        "serious": [
+          "Hepatotoxicity in overdose",
+          "Renal damage in severe overdose"
+        ]
+      },
+
+      "interactions": [
+        {
+          "drug": "metoclopramide",
+          "effect": "Increased absorption"
+        },
+        {
+          "drug": "warfarin",
+          "effect": "Enhanced anticoagulant effect with prolonged use"
+        }
+      ]
+    },
+
+    {
+      "drug_name": "acetylsalicylic_acid",
+      "aliases": ["aspirin"],
+      "atc_code": "N02BA01",
+      "category": "NSAID",
+
+      "major_warnings": [
+        "Avoid in viral illness due to Reye syndrome risk",
+        "Avoid routine analgesic use under 16 years"
+      ],
+
+      "indications": [
+        "Juvenile arthritis",
+        "Rheumatic fever",
+        "Kawasaki disease"
+      ],
+
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Peptic ulcer",
+        "Bleeding disorders",
+        "Severe hepatic failure"
+      ],
+
+      "precautions": [
+        "Asthma",
+        "Hypertension",
+        "Bleeding risk drugs",
+        "Renal impairment",
+        "Hepatic impairment",
+        "G6PD deficiency"
+      ],
+
+      "dose": {
+        "child": {
+          "note": "Avoid routine use under 16y. For specific indications only (JA, RF, Kawasaki)",
+          "mg_per_kg_range": [7.5, 12.5],
+          "frequency_hours_range": [4, 6],
+          "max_single_dose_mg": 500,
+          "max_daily_dose_mg": 3000
+        },
+        "adolescent": {
+          "note": "For specific indications only (JA, RF, Kawasaki)",
+          "mg_per_kg_range": [7.5, 12.5],
+          "frequency_hours_range": [4, 6],
+          "max_single_dose_mg": 600,
+          "max_daily_dose_mg": 4000
+        },
+        "juvenile_arthritis_rheumatic_fever": {
+          "mg_per_kg_per_day_range": [80, 130],
+          "divided_doses": [5, 6]
+        },
+        "kawasaki_disease": {
+          "initial": {
+            "neonate": {
+              "mg_per_kg": 8,
+              "frequency_per_day": 4
+            },
+            "infant_child": {
+              "mg_per_kg_range": [7.5, 12.5],
+              "frequency_per_day": 4
+            }
+          },
+          "maintenance": {
+            "mg_per_kg_range": [2, 5],
+            "frequency_per_day": 1,
+            "duration_weeks": "6-8"
+          }
+        }
+      },
+
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Dyspepsia",
+          "GI bleeding",
+          "Tinnitus",
+          "Vertigo"
+        ],
+        "rare": [
+          "Major hemorrhage",
+          "Blood dyscrasias",
+          "Reye syndrome"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "naproxen",
+      "atc_code": "M01AE02",
+      "category": "NSAID",
+      "age_restriction": {
+        "minimum_age_years": 7
+      },
+      "indications": [
+        "Mild to moderate pain",
+        "Fever",
+        "Arthritis",
+        "Dysmenorrhea"
+      ],
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Active peptic ulcer",
+        "GI bleeding",
+        "Severe renal failure",
+        "Severe hepatic failure"
+      ],
+      "precautions": [
+        "Asthma",
+        "Dehydration",
+        "Renal impairment",
+        "Hepatic impairment"
+      ],
+      "dose": {
+        "child_over_12_years": {
+          "mg_per_kg_range": [5, 7],
+          "frequency_per_day": 2,
+          "max_daily_dose_mg": 1000
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Dyspepsia",
+          "Abdominal pain"
+        ],
+        "uncommon": [
+          "GI ulceration",
+          "Fluid retention"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "amoxicillin",
+      "atc_code": "J01CA04",
+      "category": "Antibiotic - Penicillin",
+      "age_restriction": {
+        "minimum_age_days": 0
+      },
+      "indications": [
+        "Infection - bacterial",
+        "Respiratory tract infection",
+        "Urinary tract infection",
+        "Otitis media",
+        "Skin infection"
+      ],
+      "contraindications": [
+        "Penicillin hypersensitivity",
+        "Cephalosporin hypersensitivity (cross-reactivity risk)"
+      ],
+      "precautions": [
+        "Renal impairment",
+        "Mononucleosis (risk of rash)",
+        "Diarrhea history"
+      ],
+      "dose": {
+        "infant_child": {
+          "mg_per_kg_range": [25, 45],
+          "frequency_per_day": 3,
+          "max_single_dose_mg": 500,
+          "route": "oral"
+        },
+        "child_over_12_years": {
+          "single_dose_mg": 500,
+          "frequency_per_day": 3
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Vomiting",
+          "Diarrhea",
+          "Rash"
+        ],
+        "uncommon": [
+          "Allergic reaction",
+          "C. difficile colitis",
+          "Liver toxicity"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "cephalexin",
+      "aliases": ["cefalexin"],
+      "atc_code": "J01DB01",
+      "category": "Antibiotic - Cephalosporin (1st generation)",
+      "age_restriction": {
+        "minimum_age_days": 0
+      },
+      "indications": [
+        "Infection - bacterial",
+        "Respiratory tract infection",
+        "Urinary tract infection",
+        "Skin infection",
+        "Bone infection"
+      ],
+      "contraindications": [
+        "Cephalosporin hypersensitivity",
+        "Penicillin hypersensitivity (if history of anaphylaxis)"
+      ],
+      "precautions": [
+        "Renal impairment",
+        "Penicillin allergy (cross-reactivity ~1-3%)"
+      ],
+      "dose": {
+        "infant_child": {
+          "mg_per_kg_range": [25, 50],
+          "frequency_per_day": 4,
+          "route": "oral"
+        },
+        "child_over_12_years": {
+          "single_dose_mg": 500,
+          "frequency_per_day": 4,
+          "max_daily_dose_mg": 4000
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Diarrhea",
+          "Vomiting"
+        ],
+        "uncommon": [
+          "Allergic reaction",
+          "Genital candidiasis"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "azithromycin",
+      "atc_code": "J01FA10",
+      "category": "Antibiotic - Macrolide",
+      "age_restriction": {
+        "minimum_age_months": 6
+      },
+      "indications": [
+        "Respiratory tract infection",
+        "Otitis media",
+        "Whooping cough",
+        "Strep throat",
+        "Infection - bacterial"
+      ],
+      "contraindications": [
+        "Macrolide hypersensitivity",
+        "QT prolongation"
+      ],
+      "precautions": [
+        "Hepatic impairment",
+        "Renal impairment",
+        "Cardiac arrhythmias"
+      ],
+      "dose": {
+        "child": {
+          "mg_per_kg_day1": 10,
+          "mg_per_kg_day2to5": 5,
+          "max_single_dose_mg": 500,
+          "route": "oral"
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Vomiting",
+          "Diarrhea",
+          "Abdominal pain"
+        ],
+        "uncommon": [
+          "Cholestasis",
+          "QT prolongation"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "amoxicillin-clavulanate",
+      "aliases": ["augmentin"],
+      "atc_code": "J01CR02",
+      "category": "Antibiotic - Penicillin + Beta-lactamase inhibitor",
+      "age_restriction": {
+        "minimum_age_months": 3
+      },
+      "indications": [
+        "Respiratory tract infection",
+        "Urinary tract infection",
+        "Otitis media",
+        "Sinusitis",
+        "Skin infection"
+      ],
+      "contraindications": [
+        "Penicillin hypersensitivity",
+        "Beta-lactamase inhibitor hypersensitivity"
+      ],
+      "precautions": [
+        "Mononucleosis",
+        "Diarrhea history",
+        "Renal impairment"
+      ],
+      "dose": {
+        "infant_child": {
+          "mg_per_kg_amoxicillin": 25,
+          "frequency_per_day": 3,
+          "route": "oral"
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Vomiting",
+          "Diarrhea",
+          "Rash"
+        ],
+        "uncommon": [
+          "Cholestasis"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "cetirizine",
+      "atc_code": "R06AE07",
+      "category": "Antihistamine",
+      "age_restriction": {
+        "minimum_age_months": 6
+      },
+      "indications": [
+        "Allergy",
+        "Allergic rhinitis",
+        "Urticaria",
+        "Pruritus"
+      ],
+      "contraindications": [
+        "Cetirizine hypersensitivity"
+      ],
+      "precautions": [
+        "Renal impairment",
+        "Hepatic impairment"
+      ],
+      "dose": {
+        "child_6months_to_2years": {
+          "mg_per_kg": 0.25,
+          "frequency_per_day": 1,
+          "max_daily_dose_mg": 5
+        },
+        "child_2to6_years": {
+          "single_dose_mg": 5,
+          "frequency_per_day": 1
+        },
+        "child_over_6_years": {
+          "single_dose_mg": 10,
+          "frequency_per_day": 1
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Drowsiness",
+          "Headache",
+          "Dry mouth"
+        ],
+        "uncommon": [
+          "Agitation",
+          "Tachycardia"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "loratadine",
+      "atc_code": "R06AE09",
+      "category": "Antihistamine",
+      "age_restriction": {
+        "minimum_age_months": 12
+      },
+      "indications": [
+        "Allergy",
+        "Allergic rhinitis",
+        "Urticaria"
+      ],
+      "contraindications": [
+        "Loratadine hypersensitivity"
+      ],
+      "precautions": [
+        "Hepatic impairment",
+        "Renal impairment"
+      ],
+      "dose": {
+        "child_2to12_years_weight_below_30kg": {
+          "single_dose_mg": 5,
+          "frequency_per_day": 1
+        },
+        "child_over_12_years": {
+          "single_dose_mg": 10,
+          "frequency_per_day": 1
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Headache",
+          "Nervousness"
+        ],
+        "rare": [
+          "Palpitations",
+          "Tachycardia"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "phenylephrine",
+      "atc_code": "R01AB05",
+      "category": "Decongestant",
+      "age_restriction": {
+        "minimum_age_years": 3
+      },
+      "indications": [
+        "Nasal congestion",
+        "Cold symptoms",
+        "Upper respiratory infection"
+      ],
+      "contraindications": [
+        "Phenylephrine hypersensitivity",
+        "Uncontrolled hypertension"
+      ],
+      "precautions": [
+        "Cardiovascular disease",
+        "Hyperthyroidism",
+        "Diabetes"
+      ],
+      "dose": {
+        "child_3to12_years": {
+          "nasal_drops_percent": 0.5,
+          "frequency_per_day": 3,
+          "route": "nasal"
+        }
+      },
+      "adverse_effects": {
+        "common": [
+          "Nasal irritation",
+          "Sneezing"
+        ],
+        "uncommon": [
+          "Headache",
+          "Hypertension"
+        ]
+      }
+    }
+  ]
+}

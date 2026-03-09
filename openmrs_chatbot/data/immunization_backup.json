@@ -1,0 +1,79 @@
+{
+  "vaccines": [
+    {
+      "id": 1,
+      "name": "MMR (Measles, Mumps, Rubella)",
+      "type": "Live attenuated virus",
+      "recommended_age_groups": ["12-15 months", "4-6 years"],
+      "number_of_doses": 2,
+      "interval_between_doses": "28 days minimum",
+      "contraindications": ["Severe egg allergy", "Immunocompromised", "Pregnancy"],
+      "side_effects": ["Fever", "Rash", "Mild joint pain in adults"],
+      "efficacy": {
+        "measles": "97% after 2 doses",
+        "mumps": "88% after 2 doses",
+        "rubella": "99% after 2 doses"
+      },
+      "description": "Protects against measles, mumps, and rubella"
+    },
+    {
+      "id": 2,
+      "name": "COVID-19 (mRNA)",
+      "type": "mRNA vaccine",
+      "recommended_age_groups": ["6 months and older"],
+      "number_of_doses": 2,
+      "interval_between_doses": "3-8 weeks",
+      "contraindications": ["Severe allergic reaction to previous dose"],
+      "side_effects": ["Injection site pain", "Fatigue", "Headache", "Myalgia", "Fever"],
+      "efficacy": {
+        "severe_disease": "94-96%",
+        "hospitalization": "99%"
+      },
+      "description": "mRNA vaccine for COVID-19 prevention"
+    },
+    {
+      "id": 3,
+      "name": "DPT (Diphtheria, Pertussis, Tetanus)",
+      "type": "Inactivated bacterial toxoid",
+      "recommended_age_groups": ["2 months", "4 months", "6 months", "15-18 months", "4-6 years", "Adult td every 10 years"],
+      "number_of_doses": 5,
+      "interval_between_doses": "8-12 weeks for initial series",
+      "contraindications": ["Severe allergic reaction to previous dose"],
+      "side_effects": ["Fever", "Swelling at injection site", "Fussiness"],
+      "efficacy": {
+        "diphtheria": "95%",
+        "pertussis": "98%",
+        "tetanus": "99%"
+      },
+      "description": "Protects against diphtheria, pertussis, and tetanus"
+    },
+    {
+      "id": 4,
+      "name": "Polio IPV",
+      "type": "Inactivated poliovirus vaccine",
+      "recommended_age_groups": ["2 months", "4 months", "6-18 months", "4-6 years"],
+      "number_of_doses": 4,
+      "interval_between_doses": "8-12 weeks for initial series",
+      "contraindications": ["Severe allergic reaction to previous dose", "Severe immunocompromise"],
+      "side_effects": ["Soreness at injection site", "Low-grade fever"],
+      "efficacy": {
+        "polio": "99-100% after complete series"
+      },
+      "description": "Inactivated polio vaccine for polio prevention"
+    },
+    {
+      "id": 5,
+      "name": "Influenza (Seasonal)",
+      "type": "Inactivated virus or live attenuated",
+      "recommended_age_groups": ["6 months and older"],
+      "number_of_doses": 1,
+      "interval_between_doses": "N/A - annual",
+      "contraindications": ["Severe egg allergy", "Previous severe allergic reaction"],
+      "side_effects": ["Injection site soreness", "Low-grade fever", "Mild fatigue"],
+      "efficacy": {
+        "current_season": "40-60% varies by year and strain match"
+      },
+      "description": "Annual influenza vaccination for seasonal flu prevention"
+    }
+  ]
+}

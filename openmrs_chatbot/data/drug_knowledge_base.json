@@ -1,0 +1,303 @@
+{
+  "knowledge_base_type": "Clinical Drug Knowledge",
+  "version": "1.0",
+  "description": "Comprehensive drug dosing and safety information for pediatric medications",
+  "drugs": {
+    "aspirin": {
+      "canonical_name": "acetylsalicylic_acid",
+      "aliases": ["aspirin", "acetylsalicylic acid", "ASA"],
+      "atc_code": "N02BA01",
+      "category": "NSAID - Analgesic, Antipyretic",
+      
+      "indications": [
+        "Juvenile idiopathic arthritis",
+        "Rheumatic fever",
+        "Kawasaki disease",
+        "Pain relief (limited use in children)"
+      ],
+      
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Peptic ulcer disease",
+        "Bleeding disorders",
+        "Severe hepatic failure",
+        "Viral illness (Reye syndrome risk)"
+      ],
+      
+      "major_warnings": [
+        "AVOID ROUTINE USE IN CHILDREN <16 YEARS",
+        "Risk of Reye syndrome if used during viral illness",
+        "Increase risk of GI bleeding and ulceration",
+        "Increased bleeding risk with concurrent anticoagulants"
+      ],
+      
+      "precautions": [
+        "Asthma",
+        "Hypertension",
+        "Renal impairment",
+        "Hepatic impairment",
+        "G6PD deficiency",
+        "Concurrent use of anticoagulants",
+        "Concurrent NSAIDs"
+      ],
+      
+      "dosing": {
+        "child": {
+          "indication": "Limited use - primarily for specific conditions",
+          "mg_per_kg": 7.5,
+          "mg_per_kg_range": [7.5, 12.5],
+          "frequency_hours": 4,
+          "frequency_hours_range": [4, 6],
+          "max_single_dose_mg": 500,
+          "max_daily_dose_mg": 3000,
+          "notes": "For conditions like JIA or Kawasaki only"
+        },
+        "adolescent": {
+          "indication": "Age >16 years",
+          "mg_per_kg_range": [7.5, 12.5],
+          "frequency_hours_range": [4, 6],
+          "max_single_dose_mg": 650,
+          "max_daily_dose_mg": 4000
+        }
+      },
+      
+      "adverse_effects": {
+        "common": ["Nausea", "Dyspepsia", "GI irritation", "Tinnitus"],
+        "serious": ["GI bleeding", "Major hemorrhage", "Reye syndrome", "Blood dyscrasias"]
+      },
+      
+      "drug_interactions": [
+        "Warfarin: Enhanced anticoagulant effect",
+        "NSAIDs: Increased GI bleeding risk",
+        "Metoclopramide: Increased absorption"
+      ],
+      
+      "source": "WHO-MHP Essential Medicines List",
+      "approval_status": "APPROVED for specific pediatric indications only"
+    },
+    
+    "ibuprofen": {
+      "canonical_name": "ibuprofen",
+      "aliases": ["ibuprofen", "IBU"],
+      "atc_code": "M01AE01",
+      "category": "NSAID - Analgesic, Antipyretic, Anti-inflammatory",
+      
+      "age_restriction": {
+        "minimum_age_months": 3,
+        "weight_restriction_kg": 5
+      },
+      
+      "indications": [
+        "Fever",
+        "Pain relief",
+        "Mild inflammation"
+      ],
+      
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Age <3 months",
+        "Weight <5 kg",
+        "Peptic ulcer",
+        "Bleeding disorders",
+        "Severe hepatic/renal failure"
+      ],
+      
+      "major_warnings": [
+        "Use at lowest dose for shortest duration",
+        "Risk of GI bleeding and ulceration",
+        "Risk of renal impairment with chronic use",
+        "Cardiovascular risk in chronic use"
+      ],
+      
+      "precautions": [
+        "Asthma",
+        "Chronic renal/hepatic disease",
+        "Dehydration",
+        "Bleeding risk"
+      ],
+      
+      "dosing": {
+        "infant": {
+          "min_age_months": 3,
+          "min_weight_kg": 5,
+          "mg_per_kg": 10,
+          "frequency_hours": 6,
+          "max_single_dose_mg": 200,
+          "max_daily_dose_mg": 800,
+          "notes": "Suspend formulation preferred"
+        },
+        "child": {
+          "mg_per_kg": 10,
+          "frequency_hours": 6,
+          "max_single_dose_mg": 400,
+          "max_daily_dose_mg": 1200,
+          "notes": "Duration of fever control typically 4-6 hours"
+        },
+        "adolescent": {
+          "mg_per_dose": 200,
+          "frequency_hours_range": [4, 6],
+          "max_single_dose_mg": 600,
+          "max_daily_dose_mg": 1800
+        }
+      },
+      
+      "adverse_effects": {
+        "common": ["Nausea", "Dyspepsia", "Abdominal pain"],
+        "serious": ["GI bleeding", "Renal dysfunction", "Hepatotoxicity"]
+      },
+      
+      "source": "WHO Pediatric Essential Medicines List",
+      "approval_status": "APPROVED for pediatric use"
+    },
+    
+    "paracetamol": {
+      "canonical_name": "paracetamol",
+      "aliases": ["paracetamol", "acetaminophen", "APAP"],
+      "atc_code": "N02BE01",
+      "category": "Analgesic, Antipyretic",
+      
+      "indications": [
+        "Fever",
+        "Mild to moderate pain"
+      ],
+      
+      "contraindications": [
+        "Paracetamol hypersensitivity",
+        "Severe hepatic impairment"
+      ],
+      
+      "major_warnings": [
+        "Risk of hepatotoxicity with overdose",
+        "Overdose extremely dangerous in young children",
+        "Monitor total daily dose from all sources"
+      ],
+      
+      "dosing": {
+        "infant": {
+          "min_age_months": 2,
+          "mg_per_kg": 15,
+          "frequency_hours": 4,
+          "min_interval_hours": 4,
+          "max_daily_dose_mg": 5000,
+          "duration_hours": 4,
+          "notes": "Liquid formulation preferred for young children"
+        },
+        "child": {
+          "mg_per_kg": 15,
+          "frequency_hours": 4,
+          "min_interval_hours": 4,
+          "max_single_dose_mg": 1000,
+          "max_daily_dose_mg": 5000,
+          "notes": "Should not exceed 5 doses in 24 hours"
+        },
+        "adolescent": {
+          "mg_per_dose": 500,
+          "frequency_hours": 4,
+          "min_interval_hours": 4,
+          "max_single_dose_mg": 1000,
+          "max_daily_dose_mg": 4000
+        }
+      },
+      
+      "adverse_effects": {
+        "common": ["Rare"],
+        "serious": ["Hepatotoxicity with overdose", "Rare allergic reactions"]
+      },
+      
+      "source": "WHO Essential Medicines List",
+      "approval_status": "APPROVED for pediatric use"
+    },
+    
+    "amoxicillin": {
+      "canonical_name": "amoxicillin",
+      "aliases": ["amoxicillin", "amoxycillin"],
+      "atc_code": "J01CA04",
+      "category": "Antibiotic - Beta-lactam Penicillin",
+      
+      "indications": [
+        "Bacterial infections (ear, respiratory, UTI)",
+        "Otitis media",
+        "Strep throat",
+        "Pneumonia",
+        "Urinary tract infections"
+      ],
+      
+      "contraindications": [
+        "Penicillin hypersensitivity",
+        "Severe hypersensitivity reactions history"
+      ],
+      
+      "major_warnings": [
+        "Risk of allergic reactions including anaphylaxis",
+        "Cross-reactivity with cephalosporins",
+        "Mononucleosis can cause rash with amoxicillin"
+      ],
+      
+      "precautions": [
+        "Penicillin allergy history",
+        "Renal impairment",
+        "Liver disease",
+        "Concurrent anticoagulants"
+      ],
+      
+      "dosing": {
+        "infant": {
+          "min_age_months": 1,
+          "standard_dosing": {
+            "mg_per_kg": 25,
+            "frequency_times_per_day": 3,
+            "max_single_dose_mg": 500
+          },
+          "high_dose_indications": {
+            "conditions": ["Otitis media", "Strep throat"],
+            "mg_per_kg": 45,
+            "frequency_times_per_day": 3,
+            "max_single_dose_mg": 875
+          }
+        },
+        "child": {
+          "standard_dosing": {
+            "mg_per_kg": 25,
+            "frequency_times_per_day": 3,
+            "max_single_dose_mg": 500
+          },
+          "high_dose": {
+            "mg_per_kg": 45,
+            "frequency_times_per_day": 3,
+            "max_single_dose_mg": 875
+          }
+        },
+        "adolescent": {
+          "standard_dose_mg": 500,
+          "frequency_times_per_day": 3,
+          "high_dose_mg": 875,
+          "frequency_times_per_day": 3
+        }
+      },
+      
+      "duration": "7-10 days typically",
+      
+      "adverse_effects": {
+        "common": ["Diarrhea", "Nausea", "Vomiting"],
+        "serious": ["Allergic reactions", "Anaphylaxis", "Stevens-Johnson syndrome"]
+      },
+      
+      "source": "WHO Essential Medicines List",
+      "approval_status": "APPROVED for pediatric use"
+    }
+  },
+  
+  "dosing_principles": {
+    "weight_based": "Most pediatric dosing is weight-based (mg/kg)",
+    "frequency_important": "Dosing frequency crucial - not just total daily dose",
+    "age_considerations": "Age groups: neonate (0-28d), infant (1-12m), child (1-12y), adolescent (13+y)",
+    "max_doses_ceiling": "Always cap at adult maximum dose",
+    "renal_hepatic": "Adjust for renal/hepatic impairment"
+  },
+  
+  "quality_control": {
+    "source": "WHO Pediatric Essential Medicines List",
+    "last_updated": "2024",
+    "approval_level": "Approved for clinical use"
+  }
+}

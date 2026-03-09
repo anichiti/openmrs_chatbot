@@ -1,0 +1,31 @@
+*.pyc
+__pycache__/
+.env
+.venv
+venv/
+env/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+vectorstore/chroma_data/
+responses.json
+
+# Temporary test files (development only)
+tests/TEMP_*.py
+
+# Database files
+openmrs_data.sql
+openmrs-2-7-0.sql
+
+# IDE and system
+*.db
+*.sqlite
+*.sqlite3
+
