@@ -576,10 +576,373 @@ def make_flowchart2():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# FLOWCHART 3 – Architecture, Flow, and Safety Logic  (horizontal 7-module view)
+#
+# This is a fixed/polished version of the "Architecture, Flow, and Safety Logic"
+# diagram.  Bugs corrected vs. the reference image:
+#   1. All connecting arrows are drawn (modules 4→5, 5→6, 6→7, and every
+#      query-type box → module 4).
+#   2. The "4. Data Retrieval Layer" title is placed INSIDE its container box
+#      (the reference had it floating below the box).
+#   3. Uniform styling throughout: identical header treatment, consistent box
+#      borders, font sizes, and arrow weights for every module.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def make_flowchart3():
+    """Horizontal 7-module architecture diagram with all arrows & uniform style."""
+
+    WHITE = '#FFFFFF'
+    NAVY  = '#1A237E'
+    BLUE  = '#1565C0'
+    BLU_F = '#EBF5FB'   # very-light blue fill used by all modules
+    ARROW = '#1565C0'
+
+    # Query box (fill, edge) colour pairs – six distinct pastel tones
+    Q_COL = [
+        ('#AED6F1', '#1565C0'),  # Medication Query      – sky blue
+        ('#FAD7A0', '#E67E22'),  # Allergy Query         – peach
+        ('#A9DFBF', '#27AE60'),  # Immunization Query    – green
+        ('#D2B4DE', '#7D3C98'),  # Vitals Query          – lavender
+        ('#FADBD8', '#CB4335'),  # Patient Record Query  – salmon
+        ('#A3E4D7', '#17A589'),  # Hybrid Query          – teal
+    ]
+
+    # ── Figure ───────────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(28, 16))
+    fig.patch.set_facecolor(WHITE)
+    ax.set_facecolor(WHITE)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+
+    # ── Column layout (centre x, half-width) ────────────────────────────────
+    # 7 module columns + 6 inter-column gaps of 0.024
+    # Gap between Triage and Query boxes holds the "3. Intent Routing" label
+    GAP = 0.024
+    M1cx, M1hw = 0.078, 0.049   # 1. User Input
+    M2cx, M2hw = 0.211, 0.062   # 2. Triage Agent
+    QXcx, QXhw = 0.358, 0.054   # 3. Query-type boxes
+    M4cx, M4hw = 0.504, 0.062   # 4. Data Retrieval Layer (container)
+    M5cx, M5hw = 0.638, 0.054   # 5. Validation Agent
+    M6cx, M6hw = 0.775, 0.058   # 6. Response Agent
+    M7cx, M7hw = 0.909, 0.050   # 7. User Output
+
+    # Vertical module extents (every module shares the same top / bottom)
+    MOD_TOP = 0.905
+    MOD_BOT = 0.090
+    MOD_H   = MOD_TOP - MOD_BOT          # 0.815
+    MOD_CEN = (MOD_TOP + MOD_BOT) / 2    # 0.4975
+
+    # Query-box stack (6 boxes centred vertically inside [MOD_BOT, MOD_TOP])
+    N_Q   = 6
+    Q_H   = 0.105   # individual query-box height
+    Q_GAP = 0.014   # gap between query boxes
+    Q_SPAN = N_Q * Q_H + (N_Q - 1) * Q_GAP            # total vertical span
+    Q_BOT_CY = MOD_CEN - Q_SPAN / 2 + Q_H / 2         # centre of bottom box
+    Q_CYS = [Q_BOT_CY + i * (Q_H + Q_GAP)
+             for i in range(N_Q)][::-1]                 # top → bottom order
+
+    # ── Local helpers ────────────────────────────────────────────────────────
+
+    def module_panel(cx, w_half, fill, edge,
+                     header_txt, body_txt,
+                     h_sz=9.2, b_sz=7.8, lw=2.0, rad=0.013, zord=3):
+        """
+        Draw a full-height module panel with:
+          • Rounded outer box
+          • Bold header text near the top
+          • Thin separator line
+          • Body text below the separator
+        All modules use the same vertical extents (MOD_TOP / MOD_BOT).
+        """
+        left = cx - w_half
+        box = FancyBboxPatch(
+            (left, MOD_BOT), 2 * w_half, MOD_H,
+            boxstyle=f'round,pad={rad}',
+            facecolor=fill, edgecolor=edge, linewidth=lw, zorder=zord)
+        ax.add_patch(box)
+
+        # Header text at top (inside box)
+        h_y = MOD_TOP - 0.038
+        ax.text(cx, h_y, header_txt,
+                ha='center', va='top', fontsize=h_sz, weight='bold',
+                color=edge, zorder=zord + 1, multialignment='center')
+
+        # Separator
+        sep_y = h_y - 0.052
+        ax.plot([left + 0.006, left + 2 * w_half - 0.006],
+                [sep_y, sep_y],
+                color=edge, lw=0.9, alpha=0.55, zorder=zord + 1)
+
+        # Body text
+        ax.text(cx, sep_y - 0.016, body_txt,
+                ha='center', va='top', fontsize=b_sz,
+                color='#1A1A2E', zorder=zord + 1, multialignment='center',
+                linespacing=1.50)
+
+    def arr(x1, y1, x2, y2, lw=2.2, head=15, clr=ARROW, zord=5):
+        """Draw a solid arrowhead from (x1, y1) to (x2, y2)."""
+        ax.annotate(
+            '', xy=(x2, y2), xytext=(x1, y1),
+            arrowprops=dict(arrowstyle='->', color=clr,
+                            lw=lw, mutation_scale=head),
+            zorder=zord)
+
+    # ── Title ────────────────────────────────────────────────────────────────
+    ax.text(0.500, 0.965,
+            'OpenMRS Clinical Chatbot System:  Architecture, Flow, and Safety Logic',
+            ha='center', va='center', fontsize=16, weight='bold',
+            color=NAVY, zorder=6)
+    ax.plot([0.020, 0.980], [0.945, 0.945], color=BLUE, lw=1.8, zorder=5)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 1 – USER INPUT
+    # ════════════════════════════════════════════════════════════════════════
+    module_panel(M1cx, M1hw, BLU_F, BLUE,
+                 '1. User Input\n(Natural Language)',
+                 'Doctor\nPatient\nParent\n\nAny clinical or\ncare query in\nplain text')
+
+    # Arrow 1 → 2
+    arr(M1cx + M1hw, MOD_CEN, M2cx - M2hw, MOD_CEN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 2 – TRIAGE AGENT
+    # ════════════════════════════════════════════════════════════════════════
+    module_panel(M2cx, M2hw, BLU_F, BLUE,
+                 '2. Triage Agent\n(Intent Classification)',
+                 '• Classifies query\n  intent (11 types)\n'
+                 '• Detects user role:\n  doctor / patient\n'
+                 '• Extracts patient ID,\n  drug/vaccine names\n'
+                 '• Returns:\n  (user_type, intent,\n   patient_id, confidence)')
+
+    # ════════════════════════════════════════════════════════════════════════
+    # "3. Intent Routing" label + fan arrows  (Triage → each query box)
+    # ════════════════════════════════════════════════════════════════════════
+    route_lx = (M2cx + M2hw + QXcx - QXhw) / 2
+    ax.text(route_lx, MOD_TOP + 0.028,
+            '3. Intent Routing',
+            ha='center', va='center', fontsize=9.2, weight='bold',
+            color=BLUE, zorder=6)
+
+    # Fan: one arrow per query box, all from right edge of Triage Agent
+    for qcy in Q_CYS:
+        ax.annotate(
+            '', xy=(QXcx - QXhw, qcy), xytext=(M2cx + M2hw, MOD_CEN),
+            arrowprops=dict(arrowstyle='->', color=ARROW,
+                            lw=1.8, mutation_scale=12),
+            zorder=5)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # QUERY TYPE BOXES (6 stacked)
+    # ════════════════════════════════════════════════════════════════════════
+    Q_DEFS = [
+        ('Medication Query',
+         'Drug Dosage Handler\nMedication Allergy Checker'),
+        ('Allergy Query',
+         'Medication Allergy\nChecker'),
+        ('Immunization Query',
+         'Immunization Status\nHandler'),
+        ('Vitals Query',
+         'Vitals Trend Handler'),
+        ('Patient Record Query',
+         'Record Summary\nHandler'),
+        ('Hybrid Query',
+         'Hybrid Handler'),
+    ]
+
+    for i, ((qtitle, qbody), qcy) in enumerate(zip(Q_DEFS, Q_CYS)):
+        qf, qe = Q_COL[i]
+        qbox = FancyBboxPatch(
+            (QXcx - QXhw, qcy - Q_H / 2), 2 * QXhw, Q_H,
+            boxstyle='round,pad=0.009',
+            facecolor=qf, edgecolor=qe, linewidth=1.8, zorder=3)
+        ax.add_patch(qbox)
+
+        # Title (bold) + subtitle (normal) inside query box
+        ax.text(QXcx, qcy + Q_H * 0.20, qtitle,
+                ha='center', va='center', fontsize=8.8, weight='bold',
+                color=qe, zorder=4, multialignment='center')
+        ax.text(QXcx, qcy - Q_H * 0.16, qbody,
+                ha='center', va='center', fontsize=7.4,
+                color='#1A1A2E', zorder=4, multialignment='center',
+                linespacing=1.35)
+
+        # ── Arrow: this query box → Module 4 (Data Retrieval) ────────────
+        arr(QXcx + QXhw, qcy, M4cx - M4hw, qcy, lw=1.8, head=11)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 4 – DATA RETRIEVAL LAYER
+    #   FIX: title placed INSIDE the container at the top (not below it)
+    # ════════════════════════════════════════════════════════════════════════
+    m4_box = FancyBboxPatch(
+        (M4cx - M4hw, MOD_BOT), 2 * M4hw, MOD_H,
+        boxstyle='round,pad=0.013',
+        facecolor=BLU_F, edgecolor=BLUE, linewidth=2.2, zorder=3)
+    ax.add_patch(m4_box)
+
+    # Title INSIDE the box (top area)
+    m4_title_y = MOD_TOP - 0.038
+    ax.text(M4cx, m4_title_y,
+            '4. Data Retrieval Layer',
+            ha='center', va='top', fontsize=9.2, weight='bold',
+            color=BLUE, zorder=4)
+
+    # Separator below title
+    m4_sep_y = m4_title_y - 0.052
+    ax.plot([M4cx - M4hw + 0.007, M4cx + M4hw - 0.007],
+            [m4_sep_y, m4_sep_y],
+            color=BLUE, lw=1.0, alpha=0.55, zorder=4)
+
+    # Three sub-boxes (evenly filling the remaining vertical space)
+    sub4_items = [
+        ('JSON MCP DBs\n(Knowledge Base)',
+         'Drug KB  •  Immunization KB\nMilestones KB'),
+        ('ChromaDB Vector Store\n(PDF Guidelines)',
+         'WHO Medicines  •  CDC\nMilestone Checklists'),
+        ('Knowledge Agent\n(Semantic Search)',
+         'Embeds queries  •  Returns\nrelevant passages'),
+    ]
+    sub4_w  = 2 * M4hw - 0.022
+    avail4  = m4_sep_y - MOD_BOT - 0.018
+    sub4_h  = (avail4 - 2 * 0.014) / 3
+    sub4_top0 = m4_sep_y - 0.010   # top edge of first sub-box
+
+    for k, (stitle, sbody) in enumerate(sub4_items):
+        sb_top = sub4_top0 - k * (sub4_h + 0.014)
+        sb_cy  = sb_top - sub4_h / 2
+        sbox = FancyBboxPatch(
+            (M4cx - sub4_w / 2, sb_top - sub4_h), sub4_w, sub4_h,
+            boxstyle='round,pad=0.006',
+            facecolor='#D6EEF8', edgecolor=BLUE,
+            linewidth=1.4, zorder=4)
+        ax.add_patch(sbox)
+        ax.text(M4cx, sb_cy + sub4_h * 0.22, stitle,
+                ha='center', va='center', fontsize=8.0, weight='bold',
+                color=BLUE, zorder=5, multialignment='center')
+        ax.text(M4cx, sb_cy - sub4_h * 0.14, sbody,
+                ha='center', va='center', fontsize=7.2,
+                color='#1A1A2E', zorder=5, multialignment='center',
+                linespacing=1.32)
+
+    # ── Arrow 4 → 5 ──────────────────────────────────────────────────────────
+    arr(M4cx + M4hw, MOD_CEN, M5cx - M5hw, MOD_CEN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 5 – VALIDATION AGENT
+    #   FIX: arrow drawn from Module 4 (above) and to Module 6 (below)
+    # ════════════════════════════════════════════════════════════════════════
+    module_panel(M5cx, M5hw, BLU_F, BLUE,
+                 '5. Validation Agent\n(Safety Layer)',
+                 '• Verifies data exists\n'
+                 '• Prevents hallucination\n'
+                 '• Checks database\n  connectivity\n'
+                 '• Validates patient IDs\n'
+                 '• Ensures no empty\n  response')
+
+    # ── Arrow 5 → 6 ──────────────────────────────────────────────────────────
+    arr(M5cx + M5hw, MOD_CEN, M6cx - M6hw, MOD_CEN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 6 – RESPONSE AGENT
+    #   Contains two sub-panels: Doctor Response + Patient Response
+    #   FIX: arrow drawn from Module 5 (above) and to Module 7 (below)
+    # ════════════════════════════════════════════════════════════════════════
+    m6_box = FancyBboxPatch(
+        (M6cx - M6hw, MOD_BOT), 2 * M6hw, MOD_H,
+        boxstyle='round,pad=0.013',
+        facecolor=BLU_F, edgecolor=BLUE, linewidth=2.0, zorder=3)
+    ax.add_patch(m6_box)
+
+    m6_title_y = MOD_TOP - 0.038
+    ax.text(M6cx, m6_title_y,
+            '6. Response Agent\n(Formatting by Role)',
+            ha='center', va='top', fontsize=9.2, weight='bold',
+            color=BLUE, zorder=4, multialignment='center')
+
+    m6_sep_y = m6_title_y - 0.058
+    ax.plot([M6cx - M6hw + 0.007, M6cx + M6hw - 0.007],
+            [m6_sep_y, m6_sep_y],
+            color=BLUE, lw=1.0, alpha=0.55, zorder=4)
+
+    # Two response sub-boxes
+    s6w    = 2 * M6hw - 0.020
+    avail6 = m6_sep_y - MOD_BOT - 0.018
+    s6h    = (avail6 - 0.016) / 2
+    dr_top = m6_sep_y - 0.010
+    dr_cy  = dr_top - s6h / 2
+
+    dr_box = FancyBboxPatch(
+        (M6cx - s6w / 2, dr_top - s6h), s6w, s6h,
+        boxstyle='round,pad=0.006',
+        facecolor='#DBEAFE', edgecolor=BLUE, linewidth=1.4, zorder=4)
+    ax.add_patch(dr_box)
+    ax.text(M6cx, dr_cy + s6h * 0.24, 'Doctor Response',
+            ha='center', va='center', fontsize=8.0, weight='bold',
+            color=BLUE, zorder=5)
+    ax.text(M6cx, dr_cy - s6h * 0.12,
+            'Clinical detail, IDs,\nsafety notes,\nprofessional look',
+            ha='center', va='center', fontsize=7.2,
+            color='#1A1A2E', zorder=5, multialignment='center',
+            linespacing=1.30)
+
+    pt_top = dr_top - s6h - 0.016
+    pt_cy  = pt_top - s6h / 2
+    pt_box = FancyBboxPatch(
+        (M6cx - s6w / 2, pt_top - s6h), s6w, s6h,
+        boxstyle='round,pad=0.006',
+        facecolor='#FAD7A0', edgecolor='#E67E22', linewidth=1.4, zorder=4)
+    ax.add_patch(pt_box)
+    ax.text(M6cx, pt_cy + s6h * 0.24, 'Patient Response',
+            ha='center', va='center', fontsize=8.0, weight='bold',
+            color='#B7770D', zorder=5)
+    ax.text(M6cx, pt_cy - s6h * 0.12,
+            'Simplified language,\nparent-friendly,\nsoft color accent',
+            ha='center', va='center', fontsize=7.2,
+            color='#1A1A2E', zorder=5, multialignment='center',
+            linespacing=1.30)
+
+    # ── Arrow 6 → 7 ──────────────────────────────────────────────────────────
+    arr(M6cx + M6hw, MOD_CEN, M7cx - M7hw, MOD_CEN)
+
+    # ════════════════════════════════════════════════════════════════════════
+    # MODULE 7 – USER OUTPUT
+    #   FIX: arrow drawn from Module 6 (above)
+    # ════════════════════════════════════════════════════════════════════════
+    module_panel(M7cx, M7hw, BLU_F, BLUE,
+                 '7. User Output\n(Formatted)',
+                 'Structured JSON\nresponse\n\n'
+                 '• Saved to\n  responses.json\n'
+                 '• Logged for\n  audit trail')
+
+    # ════════════════════════════════════════════════════════════════════════
+    # BOTTOM CAPTION
+    # ════════════════════════════════════════════════════════════════════════
+    ax.plot([0.020, 0.980], [0.068, 0.068], color=BLUE, lw=1.2, zorder=5)
+    ax.text(0.500, 0.042,
+            'OpenMRS Clinical Chatbot: Modular NLP system routes clinical queries '
+            'for doctors and patients, performs real-time data retrieval, validation, '
+            'and safety checks,\nand formats responses for clinical and patient use'
+            '—ensuring auditability and patient safety.',
+            ha='center', va='center', fontsize=8.8,
+            color=NAVY, weight='bold', zorder=6, multialignment='center')
+
+    # ════════════════════════════════════════════════════════════════════════
+    # SAVE
+    # ════════════════════════════════════════════════════════════════════════
+    plt.tight_layout(pad=0.3)
+    out_path = os.path.join(OUTPUT_DIR, 'flowchart3_architecture_flow.png')
+    fig.savefig(out_path, dpi=150, bbox_inches='tight',
+                facecolor=WHITE, edgecolor='none')
+    plt.close(fig)
+    print(f'Saved: {out_path}')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     make_flowchart1()
     make_flowchart2()
-    print('Both flowcharts generated successfully.')
+    make_flowchart3()
+    print('All three flowcharts generated successfully.')

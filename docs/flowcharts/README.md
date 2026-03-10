@@ -1,6 +1,6 @@
 # OpenMRS Clinical Chatbot – Architecture Flowcharts
 
-Two flowcharts are provided below. PNG images (high-resolution, 150 dpi) are also
+Three flowcharts are provided below. PNG images (high-resolution, 150 dpi) are also
 available alongside this file and can be regenerated at any time with:
 
 ```bash
@@ -172,3 +172,68 @@ python docs/flowcharts/generate_flowcharts.py
 Output files:
 - `docs/flowcharts/flowchart1_agent_architecture.png`
 - `docs/flowcharts/flowchart2_knowledge_classification.png`
+- `docs/flowcharts/flowchart3_architecture_flow.png`
+
+---
+
+## Flowchart 3 — OpenMRS Clinical Chatbot System: Architecture, Flow, and Safety Logic
+
+> A horizontal 7-module pipeline diagram.
+>
+> **Fixes applied** vs. the reference image:
+> 1. **All arrows drawn** — modules 4 → 5, 5 → 6, 6 → 7, and every query-type box → module 4 all have explicit connecting arrows.
+> 2. **"4. Data Retrieval Layer" title is inside its container box** — was incorrectly floating below the box in the original.
+> 3. **Uniform styling** — identical header treatment, consistent box borders, font sizes, and arrow weights across all 7 modules.
+
+📄 High-resolution PNG: [`flowchart3_architecture_flow.png`](flowchart3_architecture_flow.png)
+
+```mermaid
+flowchart LR
+    A(["1. User Input\n(Natural Language)\nDoctor | Patient | Parent"])
+
+    A -->|"1 → 2"| B["2. Triage Agent\n(Intent Classification)\n• Classifies query intent (11 types)\n• Detects user role: doctor / patient\n• Extracts patient ID, drug/vaccine names\n• Returns: user_type, intent, patient_id, confidence"]
+
+    B -->|"3. Intent\nRouting"| C1["Medication Query\nDrug Dosage Handler\nMedication Allergy Checker"]
+    B --> C2["Allergy Query\nMedication Allergy Checker"]
+    B --> C3["Immunization Query\nImmunization Status Handler"]
+    B --> C4["Vitals Query\nVitals Trend Handler"]
+    B --> C5["Patient Record Query\nRecord Summary Handler"]
+    B --> C6["Hybrid Query\nHybrid Handler"]
+
+    C1 & C2 & C3 & C4 & C5 & C6 -->|"→ 4"| D
+
+    subgraph D["4. Data Retrieval Layer"]
+        D1["JSON MCP DBs\n(Knowledge Base)\nDrug KB • Immunization KB • Milestones KB"]
+        D2["ChromaDB Vector Store\n(PDF Guidelines)\nWHO Medicines • CDC Milestone Checklists"]
+        D3["Knowledge Agent\n(Semantic Search)\nEmbeds queries • Returns relevant passages"]
+    end
+
+    D -->|"4 → 5"| E["5. Validation Agent\n(Safety Layer)\n• Verifies data exists\n• Prevents hallucination\n• Checks database connectivity\n• Validates patient IDs\n• Ensures no empty response"]
+
+    E -->|"5 → 6"| F
+
+    subgraph F["6. Response Agent\n(Formatting by Role)"]
+        F1["Doctor Response\nClinical detail, IDs, safety notes, professional look"]
+        F2["Patient Response\nSimplified language, parent-friendly, soft color accent"]
+    end
+
+    F -->|"6 → 7"| G(["7. User Output\n(Formatted)\n• Saved to responses.json\n• Logged for audit trail"])
+
+    style A fill:#EBF5FB,stroke:#1565C0
+    style B fill:#EBF5FB,stroke:#1565C0
+    style C1 fill:#AED6F1,stroke:#1565C0
+    style C2 fill:#FAD7A0,stroke:#E67E22
+    style C3 fill:#A9DFBF,stroke:#27AE60
+    style C4 fill:#D2B4DE,stroke:#7D3C98
+    style C5 fill:#FADBD8,stroke:#CB4335
+    style C6 fill:#A3E4D7,stroke:#17A589
+    style D fill:#EBF5FB,stroke:#1565C0
+    style D1 fill:#D6EEF8,stroke:#1565C0
+    style D2 fill:#D6EEF8,stroke:#1565C0
+    style D3 fill:#D6EEF8,stroke:#1565C0
+    style E fill:#EBF5FB,stroke:#1565C0
+    style F fill:#EBF5FB,stroke:#1565C0
+    style F1 fill:#DBEAFE,stroke:#1565C0
+    style F2 fill:#FAD7A0,stroke:#E67E22
+    style G fill:#EBF5FB,stroke:#1565C0
+```
