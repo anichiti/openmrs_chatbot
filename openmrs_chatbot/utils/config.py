@@ -3,12 +3,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Database Configuration (MySQL via Docker)
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", "3308"))
+# Database Configuration (MySQL)
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+DB_PORT = int(os.getenv("DB_PORT", "3307"))
 DB_NAME = os.getenv("DB_NAME", "chatbot-dev")
-DB_USER = os.getenv("DB_USER", "openmrs")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "openmrs")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
 DB_TYPE = os.getenv("DB_TYPE", "mysql")
 
 # Ollama Configuration (Local LLM) - Free & No API limits!
