@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenMRS Clinical Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="landing-page">
+
+  <div class="landing-wrapper">
+    <!-- Logo / Header -->
+    <div class="landing-header">
+      <div class="logo-mark">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="22" stroke="#2563eb" stroke-width="3"/>
+          <path d="M24 12v24M12 24h24" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="24" cy="24" r="6" fill="#2563eb"/>
+        </svg>
+      </div>
+      <h1>OpenMRS Clinical Chatbot</h1>
+      <p class="landing-subtitle">Intelligent pediatric clinical decision support powered by your OpenMRS data</p>
+    </div>
+
+    <!-- Role Selection Cards -->
+    <div class="role-cards">
+
+      <!-- Doctor Card -->
+      <form action="/set-role" method="POST">
+        <input type="hidden" name="role" value="doctor" />
+        <button type="submit" class="role-card role-card--doctor">
+          <div class="role-card__icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="20" r="10" stroke="currentColor" stroke-width="3"/>
+              <path d="M14 52c0-9.941 8.059-18 18-18s18 8.059 18 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M38 36v10M33 41h10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="44" cy="44" r="7" stroke="currentColor" stroke-width="2.5"/>
+            </svg>
+          </div>
+          <div class="role-card__content">
+            <h2>Doctor</h2>
+            <p>Access full clinical data, dosage calculations, allergy contraindications, lab results, and patient records.</p>
+            <ul class="role-card__features">
+              <li>Patient record queries</li>
+              <li>Drug dosage &amp; interactions</li>
+              <li>Clinical decision support</li>
+              <li>Immunization schedules</li>
+            </ul>
+          </div>
+          <div class="role-card__cta">
+            Enter as Doctor
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+            </svg>
+          </div>
+        </button>
+      </form>
+
+      <!-- Patient Card -->
+      <form action="/set-role" method="POST">
+        <input type="hidden" name="role" value="patient" />
+        <button type="submit" class="role-card role-card--patient">
+          <div class="role-card__icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="20" r="10" stroke="currentColor" stroke-width="3"/>
+              <path d="M14 54c0-9.941 8.059-18 18-18s18 8.059 18 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M26 40c0 3.314 2.686 6 6 6s6-2.686 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="role-card__content">
+            <h2>Patient / Parent</h2>
+            <p>Get easy-to-understand information about medications, allergies, vaccinations, and your child's health records.</p>
+            <ul class="role-card__features">
+              <li>Medication guidance</li>
+              <li>Allergy information</li>
+              <li>Vaccination history</li>
+              <li>Growth &amp; milestones</li>
+            </ul>
+          </div>
+          <div class="role-card__cta">
+            Enter as Patient
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+            </svg>
+          </div>
+        </button>
+      </form>
+
+    </div><!-- /role-cards -->
+
+    <!-- Footer note -->
+    <p class="landing-disclaimer">
+      This system accesses live OpenMRS patient data. All responses are for informational purposes only.
+      Always consult a qualified healthcare professional for medical decisions.
+    </p>
+  </div>
+
+</body>
+</html>

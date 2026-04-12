@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenMRS Chatbot – {{ role | capitalize }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="chat-page role-{{ role }}">
+
+<!-- ── Top Navigation Bar ─────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar__left">
+    <div class="topbar__logo">
+      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="3"/>
+        <path d="M24 12v24M12 24h24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="6" fill="currentColor"/>
+      </svg>
+    </div>
+    <span class="topbar__title">OpenMRS Clinical Chatbot</span>
+  </div>
+  <div class="topbar__right">
+    <div class="role-badge role-badge--{{ role }}">
+      {% if role == 'doctor' %}
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 100 10A5 5 0 0010 2zm0 12c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/></svg>
+      {% else %}
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 100 10A5 5 0 0010 2zm0 12c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/></svg>
+      {% endif %}
+      {{ role | capitalize }}
+    </div>
+    <form action="/reset" method="POST" style="margin:0">
+      <button type="submit" class="btn btn--ghost btn--sm">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"/></svg>
+        Switch Role
+      </button>
+    </form>
+  </div>
+</header>
+
+<!-- ── Main Layout ─────────────────────────────────────────────────────────── -->
+<div class="chat-layout">
+
+  <!-- ── LEFT SIDEBAR ──────────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Patient Search -->
+    <div class="sidebar__section">
+      <h3 class="sidebar__heading">Patient Search</h3>
+      <div class="search-box">
+        <svg class="search-box__icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/>
+        </svg>
+        <input
+          type="text"
+          id="patientSearch"
+          class="search-box__input"
+          placeholder="Name or Patient ID…"
+          autocomplete="off"
+        />
+        <button id="clearSearch" class="search-box__clear" title="Clear" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg>
+        </button>
+      </div>
+
+      <div class="search-actions">
+        <button id="btnListAll" class="btn btn--outline btn--sm btn--full">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
+          Show All Patients
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="sidebar__section sidebar__section--grow" id="searchResultsSection" style="display:none">
+      <h3 class="sidebar__heading">
+        Results
+        <span id="resultCount" class="badge badge--gray">0</span>
+      </h3>
+      <div id="searchResults" class="patient-list"></div>
+    </div>
+
+    <!-- Selected Patient Card -->
+    <div class="sidebar__section" id="selectedPatientSection" style="display:none">
+      <h3 class="sidebar__heading">Selected Patient</h3>
+      <div id="selectedPatientCard" class="patient-card"></div>
+      <button id="btnClearPatient" class="btn btn--ghost btn--sm btn--full" style="margin-top:8px">
+        Clear Selection
+      </button>
+    </div>
+
+    <!-- No patient hint -->
+    <div class="sidebar__hint" id="noPatientHint">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      <p>Search or browse patients to begin</p>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+  <!-- ── CHAT PANEL ─────────────────────────────────────────────────────────── -->
+  <main class="chat-panel">
+
+    <!-- Patient Context Header -->
+    <div class="patient-header" id="patientHeader" style="display:none">
+      <div class="patient-header__info">
+        <div class="patient-header__avatar" id="patientAvatar">?</div>
+        <div>
+          <div class="patient-header__name" id="patientHeaderName">—</div>
+          <div class="patient-header__meta" id="patientHeaderMeta">—</div>
+        </div>
+      </div>
+      <div class="patient-header__badges" id="patientHeaderBadges"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="chat-empty" id="chatEmpty">
+      <div class="chat-empty__icon">
+        {% if role == 'doctor' %}
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="32" cy="20" r="10"/><path d="M14 52c0-9.941 8.059-18 18-18s18 8.059 18 18"/>
+          <path d="M38 36v10M33 41h10"/><circle cx="44" cy="44" r="7"/>
+        </svg>
+        {% else %}
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="32" cy="20" r="10"/><path d="M14 54c0-9.941 8.059-18 18-18s18 8.059 18 18"/>
+          <path d="M26 40c0 3.314 2.686 6 6 6s6-2.686 6-6"/>
+        </svg>
+        {% endif %}
+      </div>
+      <h2>Welcome, {{ role | capitalize }}</h2>
+      {% if role == 'doctor' %}
+      <p>Select a patient from the sidebar, then ask clinical questions about their records, medications, allergies, immunizations, and more.</p>
+      <div class="example-queries">
+        <span class="example-query" data-query="What are this patient's current vitals?">Vitals</span>
+        <span class="example-query" data-query="What active medications is this patient on?">Active Meds</span>
+        <span class="example-query" data-query="Does this patient have any drug allergies?">Allergies</span>
+        <span class="example-query" data-query="What vaccines has this patient received?">Immunizations</span>
+        <span class="example-query" data-query="Show me this patient's conditions and diagnoses">Conditions</span>
+        <span class="example-query" data-query="What is the correct paracetamol dose for this patient?">Dosage</span>
+      </div>
+      {% else %}
+      <p>Select a patient from the sidebar, then ask questions about medications, allergies, vaccinations, and health records in simple, easy-to-understand language.</p>
+      <div class="example-queries">
+        <span class="example-query" data-query="What medicines has my child been prescribed?">Medications</span>
+        <span class="example-query" data-query="Does my child have any allergies?">Allergies</span>
+        <span class="example-query" data-query="When is my child's next vaccination due?">Vaccines</span>
+        <span class="example-query" data-query="What is my child's weight and height?">Growth</span>
+        <span class="example-query" data-query="What milestones should my child have reached?">Milestones</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Messages container -->
+    <div class="messages" id="messages"></div>
+
+    <!-- Typing indicator -->
+    <div class="typing-indicator" id="typingIndicator" style="display:none">
+      <div class="typing-indicator__dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span class="typing-indicator__text">Processing your query…</span>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea
+          id="messageInput"
+          class="message-input"
+          placeholder="Ask a question about the selected patient…"
+          rows="1"
+          maxlength="1000"
+        ></textarea>
+        <button id="sendBtn" class="send-btn" disabled title="Send">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+          </svg>
+        </button>
+      </div>
+      <p class="input-hint">
+        <span id="noPatientWarning" style="color: var(--color-warning)">
+          ⚠ Select a patient first to query their records
+        </span>
+        <span id="patientSelectedHint" style="display:none; color: var(--color-text-muted)">
+          Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line
+        </span>
+      </p>
+    </div>
+
+  </main><!-- /chat-panel -->
+
+</div><!-- /chat-layout -->
+
+<script>
+  window.CHATBOT_ROLE = "{{ role }}";
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

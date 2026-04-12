@@ -1,0 +1,272 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  OPENMRS CLINICAL CHATBOT - SETUP GUIDE                    ║
+║                      Local Laptop Installation                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+This guide helps you set up the OpenMRS Clinical Chatbot on your Windows laptop
+with Llama 2 already installed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PREREQUISITES (Check These First)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Python 3.8+ installed
+  Check: python --version
+
+✓ MySQL 5.7+ installed and running
+  Install from: https://dev.mysql.com/downloads/mysql/
+  Windows installer recommended
+
+✓ Ollama installed with Llama 2
+  You said you already have this - Great!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: SETUP MYSQL DATABASE (FIRST TIME ONLY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.1 INSTALL MYSQL (if not already done)
+   ► Download: https://dev.mysql.com/downloads/mysql/
+   ► Run installer
+   ► Choose "Server" component
+   ► Default port: 3306 (keep this)
+   ► Default username: root
+   ► Set password as you wish (we'll use 'root' for development)
+
+1.2 START MYSQL SERVER
+   Option A - Windows Services:
+   ► Press Win + R
+   ► Type: services.msc
+   ► Find "MySQL57" (or MySQL80, etc.)
+   ► Right-click → Start
+
+   Option B - Command Line:
+   ► Open PowerShell as Administrator
+   ► Run: net start MySQL57
+   ► (Replace MySQL57 with your service name if different)
+
+1.3 VERIFY MYSQL IS RUNNING
+   ► Open PowerShell
+   ► Run: mysql -u root -p
+   ► Enter password when prompted
+   ► If you see: mysql>  → MySQL is running ✓
+   ► Type: exit
+
+1.4 CREATE CHATBOT DATABASE (first time setup)
+   ► Run this SQL:
+   
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS chatbot_dev CHARACTER SET utf8 COLLATE utf8_general_ci;"
+
+   If you changed the default password, replace 'root' with your password.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: VERIFY OLLAMA & LLAMA2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 CHECK IF OLLAMA IS RUNNING
+   ► Open PowerShell
+   ► Run: curl http://localhost:11434/api/tags
+   
+   If you see JSON output → Ollama is running ✓
+   
+   If you get an error:
+   ► Start Ollama - look for Ollama application in your system
+   ► Or run: ollama serve (in a new PowerShell window)
+   ► Keep this window open while using the chatbot
+
+2.2 VERIFY LLAMA2 MODEL
+   ► Run: ollama list
+   
+   You should see "llama2" in the list.
+   If not, install it with: ollama pull llama2
+
+2.3 INSTALL EMBEDDING MODEL (needed for knowledge base)
+   ► Run: ollama pull nomic-embed-text
+   ► This takes 5-10 minutes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: INSTALL PYTHON DEPENDENCIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1 NAVIGATE TO PROJECT FOLDER
+   ► Open PowerShell
+   ► Run: cd c:\Users\megha\PycharmProjects\openmrs_chatbot-1\openmrs_chatbot
+
+3.2 CREATE VIRTUAL ENVIRONMENT (recommended)
+   ► Run: python -m venv venv
+   ► Activate it: .\venv\Scripts\Activate.ps1
+   ► You should see (venv) prompt
+
+3.3 INSTALL REQUIREMENTS
+   ► Run: pip install -r requirements.txt
+   ► This takes 2-5 minutes
+   ► You may see some warnings - these are normal
+
+   If you get permission errors, use:
+   ► pip install --user -r requirements.txt
+
+3.4 VERIFY INSTALLATION
+   ► Run: python -c "import mysql.connector; print('MySQL OK')"
+   ► Run: python -c "import chromadb; print('ChromaDB OK')"
+   ► Run: python -c "import ollama; print('Ollama OK')"
+   ► All should print OK
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: CONFIGURE ENVIRONMENT (.env FILE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ I've already created a .env file for your laptop setup.
+
+Location: openmrs_chatbot/.env
+
+Current settings:
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_NAME=chatbot_dev
+   DB_USER=root
+   DB_PASSWORD=root
+   OLLAMA_HOST=http://localhost:11434
+   OLLAMA_MODEL=llama2
+   OLLAMA_EMBED_MODEL=nomic-embed-text
+
+IF YOU CHANGED MYSQL PASSWORD:
+   ► Open the .env file in a text editor
+   ► Change: DB_PASSWORD=root → DB_PASSWORD=<your_password>
+   ► Save the file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5: TEST DATABASE CONNECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5.1 RUN CONNECTION TEST
+   ► Run: python tests/test_db_connection.py
+   
+   Expected output:
+   ✓ OpenMRS database connected
+   ✓ Query retrieved 0 records
+   
+   If you see errors:
+   ► MySQL is not running (restart it)
+   ► Wrong password in .env file
+   ► SQL injection test issue (safe to ignore)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6: INITIALIZE KNOWLEDGE BASE (OPTIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The knowledge base uses ChromaDB (vector search). If you have PDF documents:
+
+6.1 ADD PDF FILES
+   ► Create PDFs in:
+     - knowledge_base/doctor/     (for clinical documents)
+     - knowledge_base/patient/    (for patient-safe documents)
+
+6.2 INITIALIZE
+   ► Run: python technical/init_kb.py
+   ► This builds the vector index
+   ► Takes 10-30 seconds depending on PDF size
+
+If no PDFs: Skip this step - the chatbot will still work
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 7: RUN THE CHATBOT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7.1 START OLLAMA (if not already running)
+   ► Open PowerShell
+   ► Run: ollama serve
+   ► Keep this window open
+
+7.2 RUN THE CHATBOT (in a different PowerShell window)
+   ► Activate virtual environment: .\venv\Scripts\Activate.ps1
+   ► Navigate to project: cd c:\Users\megha\PycharmProjects\openmrs_chatbot-1\openmrs_chatbot
+   ► Run: python main.py
+
+   Expected output:
+   Initializing Clinical Chatbot...
+   Chatbot initialized
+   
+   Then you'll see:
+   ============================================================
+   CLINICAL CHATBOT - USER ROLE SELECTION
+   ============================================================
+   Please select your role:
+     1. Doctor
+     2. Patient
+   ============================================================
+
+7.3 SELECT ROLE & TEST
+   ► Enter 1 (for Doctor) or 2 (for Patient)
+   ► Ask a question, e.g: "Tell me about patient 123"
+   ► The chatbot should respond
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 8: RUN WEB INTERFACE (OPTIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Instead of command line, use the Flask web interface:
+
+8.1 RUN THE WEB SERVER
+   ► Activate virtual environment: .\venv\Scripts\Activate.ps1
+   ► Navigate to project: cd c:\Users\megha\PycharmProjects\openmrs_chatbot-1\openmrs_chatbot
+   ► Run: python app.py
+
+8.2 OPEN IN BROWSER
+   ► Open browser and go to: http://localhost:5000
+   ► The chatbot interface loads
+   ► Select role and start chatting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROBLEM: "Database connection failed"
+SOLUTION:
+   1. Make sure MySQL is running (services.msc)
+   2. Check .env file has correct password
+   3. Run: mysql -u root -p to verify MySQL access
+
+PROBLEM: "Ollama connection refused"
+SOLUTION:
+   1. Make sure Ollama is running: ollama serve
+   2. Keep that terminal window open
+   3. Verify: curl http://localhost:11434/api/tags
+
+PROBLEM: "Module not found: mysql.connector"
+SOLUTION:
+   1. Make sure virtual environment is activated: .\venv\Scripts\Activate.ps1
+   2. Reinstall requirements: pip install -r requirements.txt
+
+PROBLEM: "chromadb" import error
+SOLUTION:
+   1. Run: pip install --upgrade chromadb
+   2. If still fails: pip install chromadb==0.4.14
+
+PROBLEM: "Port 5000 already in use" (for web interface)
+SOLUTION:
+   1. Change port in app.py line: app.run(port=5001)
+   2. Then access: http://localhost:5001
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK START CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ MySQL installed and running
+☐ Database created: chatbot_dev
+☐ Ollama running with llama2 and nomic-embed-text
+☐ Python 3.8+ installed
+☐ Virtual environment created and activated
+☐ Requirements installed: pip install -r requirements.txt
+☐ .env file configured with correct credentials
+☐ Database test passed: python tests/test_db_connection.py
+☐ Ready to run: python main.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STILL NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run the verification script:
+   python troubleshooting/verify_config.py
+
+This checks all components and shows what's missing.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

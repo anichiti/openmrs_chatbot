@@ -1,0 +1,287 @@
+{
+  "knowledge_group": "analgesics_antipyretics_nsaids",
+  "version": "1.0",
+  "source": "WHO Pediatric Essential Medicines List",
+  "last_updated": "2026-02-24",
+
+  "pediatric_age_groups": {
+    "neonate": {
+      "min_days": 0,
+      "max_days": 28
+    },
+    "infant": {
+      "min_months": 1,
+      "max_months": 12
+    },
+    "child": {
+      "min_years": 1,
+      "max_years": 12
+    }
+  },
+
+  "pain_management_principles": {
+    "model": "WHO Analgesic Ladder",
+    "steps": [
+      {
+        "pain_level": "mild",
+        "treatment": "Non-opioid ± NSAID ± adjuvant"
+      },
+      {
+        "pain_level": "moderate",
+        "treatment": "Mild opioid + non-opioid ± NSAID ± adjuvant"
+      },
+      {
+        "pain_level": "severe",
+        "treatment": "Strong opioid + non-opioid ± NSAID ± adjuvant"
+      }
+    ],
+    "note": "Non-drug strategies are important in pediatric pain management"
+  },
+
+  "drugs": [
+    {
+      "drug_name": "ibuprofen",
+      "atc_code": "M01AE01",
+      "category": "NSAID",
+
+      "age_restriction": {
+        "minimum_age_months": 3
+      },
+
+      "indications": [
+        "Mild pain",
+        "Moderate pain"
+      ],
+
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Asthma triggered by NSAIDs",
+        "Active peptic ulcer",
+        "GI bleeding",
+        "Severe renal failure",
+        "Severe hepatic failure",
+        "Severe cardiac failure"
+      ],
+
+      "precautions": [
+        "Asthma",
+        "Cardiac disease",
+        "Dehydration",
+        "Bleeding risk medications",
+        "Previous peptic ulcer",
+        "Coagulation disorders",
+        "Renal impairment",
+        "Hepatic impairment"
+      ],
+
+      "dose": {
+        "calculation_type": "weight_based",
+
+        "infant_child": {
+          "mg_per_kg_range": [5, 10],
+          "frequency_per_day_range": [3, 4],
+          "max_daily_mg_per_kg": 40,
+          "route": "oral",
+          "administration_note": "Give with or after food"
+        }
+      },
+
+      "renal_impairment": {
+        "mild": "Use lowest effective dose and monitor renal function",
+        "moderate_severe": "Avoid"
+      },
+
+      "hepatic_impairment": {
+        "guidance": "Use with caution",
+        "severe": "Avoid"
+      },
+
+      "major_warnings": [
+        "Give with or after food to minimize GI upset",
+        "Monitor for GI bleeding, especially with prolonged use",
+        "Use lowest effective dose for shortest duration"
+      ],
+
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Diarrhea",
+          "Dyspepsia",
+          "Headache",
+          "Dizziness",
+          "Fluid retention",
+          "Hypertension",
+          "GI ulceration",
+          "GI bleeding"
+        ],
+        "uncommon": [
+          "Rash",
+          "Photosensitivity",
+          "Renal impairment"
+        ],
+        "rare": [
+          "Angioedema",
+          "Bronchospasm",
+          "Hepatic damage",
+          "Pancreatitis",
+          "Visual disturbances",
+          "Stevens-Johnson syndrome",
+          "Toxic epidermal necrolysis"
+        ]
+      }
+    },
+
+    {
+      "drug_name": "paracetamol",
+      "aliases": ["acetaminophen"],
+      "atc_code": "N02BE01",
+      "category": "Non-opioid analgesic / antipyretic",
+
+      "indications": [
+        "Mild pain",
+        "Moderate pain",
+        "Fever"
+      ],
+
+      "precautions": [
+        "Hepatic impairment",
+        "Renal impairment",
+        "Overdose risk"
+      ],
+
+      "dose": {
+        "calculation_type": "weight_based",
+
+        "neonate": {
+          "mg_per_kg": 10,
+          "frequency_hours_range": [6, 8],
+          "max_doses_per_day": 4
+        },
+
+        "infant_child": {
+          "mg_per_kg": 15,
+          "max_single_dose_mg": 1000,
+          "frequency_hours_range": [4, 6],
+          "max_doses_per_day": 4,
+          "max_daily_mg": 4000
+        }
+      },
+
+      "age_notes": [
+        "Infants under 3 months only under medical advice"
+      ],
+
+      "major_warnings": [
+        "Risk of hepatotoxicity with overdose",
+        "Never exceed 4000 mg per day in children"
+      ],
+
+      "adverse_effects": {
+        "rare": [
+          "Rash",
+          "Hypersensitivity",
+          "Neutropenia",
+          "Thrombocytopenia",
+          "Pancytopenia"
+        ],
+        "serious": [
+          "Hepatotoxicity in overdose",
+          "Renal damage in severe overdose"
+        ]
+      },
+
+      "interactions": [
+        {
+          "drug": "metoclopramide",
+          "effect": "Increased absorption"
+        },
+        {
+          "drug": "warfarin",
+          "effect": "Enhanced anticoagulant effect with prolonged use"
+        }
+      ]
+    },
+
+    {
+      "drug_name": "acetylsalicylic_acid",
+      "aliases": ["aspirin"],
+      "atc_code": "N02BA01",
+      "category": "NSAID",
+
+      "major_warnings": [
+        "Avoid in viral illness due to Reye syndrome risk",
+        "Avoid routine analgesic use under 16 years",
+        "Use only for specific pediatric indications: Juvenile Arthritis, Rheumatic Fever, Kawasaki Disease"
+      ],
+
+      "indications": [
+        "Juvenile arthritis",
+        "Rheumatic fever",
+        "Kawasaki disease"
+      ],
+
+      "contraindications": [
+        "NSAID hypersensitivity",
+        "Peptic ulcer",
+        "Bleeding disorders",
+        "Severe hepatic failure",
+        "Viral illness"
+      ],
+
+      "precautions": [
+        "Asthma",
+        "Hypertension",
+        "Bleeding risk drugs",
+        "Renal impairment",
+        "Hepatic impairment",
+        "G6PD deficiency"
+      ],
+
+      "dose": {
+        "calculation_type": "weight_based",
+
+        "neonate": {
+          "mg_per_kg": 8,
+          "frequency_per_day": 4,
+          "max_single_dose_mg": 125,
+          "notes": "Kawasaki disease initial phase only"
+        },
+
+        "infant_child": {
+          "mg_per_kg_range": [7.5, 12.5],
+          "frequency_per_day": 4,
+          "max_single_dose_mg": 500,
+          "max_daily_mg_per_kg": 50,
+          "notes": "Use only for Kawasaki disease, Juvenile Arthritis, or Rheumatic Fever"
+        },
+
+        "indication_specific": {
+          "juvenile_arthritis_rheumatic_fever": {
+            "mg_per_kg_per_day_range": [80, 130],
+            "divided_doses": [5, 6]
+          },
+          "kawasaki_disease_maintenance": {
+            "mg_per_kg_range": [2, 5],
+            "frequency_per_day": 1,
+            "duration_weeks": "6-8"
+          }
+        }
+      },
+
+      "adverse_effects": {
+        "common": [
+          "Nausea",
+          "Dyspepsia",
+          "GI bleeding",
+          "Tinnitus",
+          "Vertigo"
+        ],
+        "rare": [
+          "Major hemorrhage",
+          "Blood dyscrasias",
+          "Reye syndrome"
+        ]
+      }
+    }
+  ]
+}

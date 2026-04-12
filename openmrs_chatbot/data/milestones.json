@@ -1,0 +1,170 @@
+{
+  "milestones": [
+    {
+      "age_months": 3,
+      "type": "Motor",
+      "milestones": [
+        "Holds head steady when supported",
+        "Pushes down with legs when feet are on firm surface",
+        "May swipe at dangling objects",
+        "Grasps objects briefly"
+      ]
+    },
+    {
+      "age_months": 6,
+      "type": "Motor",
+      "milestones": [
+        "Rolls over in both directions",
+        "Transfers objects from one hand to another",
+        "Sits up with minimal support",
+        "Bears weight on legs with support",
+        "Reaches with one hand"
+      ]
+    },
+    {
+      "age_months": 9,
+      "type": "Motor",
+      "milestones": [
+        "Gets to sitting position without assistance",
+        "Crawls forward on belly",
+        "Sits without support",
+        "Pulls to stand using furniture",
+        "Cruises along furniture"
+      ]
+    },
+    {
+      "age_months": 12,
+      "type": "Motor",
+      "milestones": [
+        "Gets to standing without help",
+        "Walks holding on to furniture",
+        "May take a few steps without holding on",
+        "May stand alone for a few seconds"
+      ]
+    },
+    {
+      "age_months": 3,
+      "type": "Cognitive",
+      "milestones": [
+        "Follows objects moving side to side",
+        "Watches objects placed in hand",
+        "Looks at shaking rattle for brief moment",
+        "Reacts to sudden sounds"
+      ]
+    },
+    {
+      "age_months": 6,
+      "type": "Cognitive",
+      "milestones": [
+        "Looks around at objects nearby",
+        "Brings things to mouth",
+        "Shows curiosity about objects and textures",
+        "Watches the raisin or Cheerio as you move it slowly"
+      ]
+    },
+    {
+      "age_months": 9,
+      "type": "Cognitive",
+      "milestones": [
+        "Looks for objects that are hidden",
+        "Plays peek-a-boo",
+        "Pokes at objects with index finger",
+        "Transfers objects from one hand to other"
+      ]
+    },
+    {
+      "age_months": 12,
+      "type": "Cognitive",
+      "milestones": [
+        "Plays simple pretend, like feeding a doll",
+        "Follows simple directions",
+        "Points to body parts",
+        "Explores objects in different ways like shaking, banging, throwing"
+      ]
+    },
+    {
+      "age_months": 3,
+      "type": "Social/Emotional",
+      "milestones": [
+        "Cries for needs",
+        "Makes vocal sounds",
+        "Begins to smile at people",
+        "Can briefly calm self"
+      ]
+    },
+    {
+      "age_months": 6,
+      "type": "Social/Emotional",
+      "milestones": [
+        "Knows familiar people",
+        "Likes to look at self in mirror",
+        "Laughs",
+        "Squeals in delight",
+        "Babbles with expression"
+      ]
+    },
+    {
+      "age_months": 9,
+      "type": "Social/Emotional",
+      "milestones": [
+        "May be fearful around strangers",
+        "Cries when parent leaves",
+        "Plays peek-a-boo",
+        "Repeats sounds",
+        "Waves bye-bye"
+      ]
+    },
+    {
+      "age_months": 12,
+      "type": "Social/Emotional",
+      "milestones": [
+        "Shows fear of strangers",
+        "Shows strong attachment to parents",
+        "Points to show interest",
+        "Claps when excited",
+        "Plays simple games like pat-a-cake"
+      ]
+    },
+    {
+      "age_months": 3,
+      "type": "Communication",
+      "milestones": [
+        "Coos (makes vowel sounds)",
+        "Reacts to loud sounds",
+        "Turns head toward sound"
+      ]
+    },
+    {
+      "age_months": 6,
+      "type": "Communication",
+      "milestones": [
+        "Babbles (strings of consonant and vowel sounds)",
+        "Responds to own name",
+        "Makes sounds to express joy and displeasure",
+        "Begins to babble with different tones"
+      ]
+    },
+    {
+      "age_months": 9,
+      "type": "Communication",
+      "milestones": [
+        "Uses gestures like waving or pointing",
+        "Responds to simple verbal requests",
+        "Uses exclamations like 'oh oh!' and 'uh oh!'",
+        "Tries to imitate word sounds",
+        "Says 'dada' and 'mama' (but not always appropriately)"
+      ]
+    },
+    {
+      "age_months": 12,
+      "type": "Communication",
+      "milestones": [
+        "Says first words like 'mama' or 'dada'",
+        "Tries to repeat words you say",
+        "Understands simple requests",
+        "Recognizes words for common items",
+        "Enjoys looking at books"
+      ]
+    }
+  ]
+}
