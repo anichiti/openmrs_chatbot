@@ -11,10 +11,14 @@ Intents supported:
 4. MEDICATION_EMERGENCY - Patient overdosed/poisoned
 5. ALLERGY_QUERY - Is patient allergic to X? What can't we give?
 6. VITALS_QUERY - Blood pressure, weight, temperature, SpO2, etc
-7. IMMUNIZATION_QUERY - What vaccines? Vaccination status?
-8. MILESTONE_QUERY - Child development - should be walking/talking?
-9. PATIENT_RECORD_QUERY - Patient demographics (name, age, DOB)
-10. GENERAL_MEDICAL_QUERY - General medical knowledge (not patient-specific)
+7. VITALS_HISTORY_QUERY - Past vital readings, vitals trend, history
+8. IMMUNIZATION_QUERY - What vaccines? Vaccination status?
+9. LAB_QUERY - Patient lab results and orders?
+10. ENCOUNTERS_QUERY - Patient visits and encounters?
+11. FUTURE_APPOINTMENTS_QUERY - Upcoming scheduled appointments?
+12. MILESTONE_QUERY - Child development - should be walking/talking?
+13. PATIENT_RECORD_QUERY - Patient demographics (name, age, DOB)
+14. GENERAL_MEDICAL_QUERY - General medical knowledge (not patient-specific)
 
 Flow:
   Layer 1 (Keywords) → If high confidence, return immediately
@@ -90,6 +94,18 @@ class TwoLayerIntentClassifier:
                 "weight": 0.85,
             },
             
+            "PAST_MEDICATIONS_QUERY": {
+                "keywords": [
+                    "past medications", "previous medications", "old medications",
+                    "was.*on", "used to take", "took before", "discontinued",
+                    "stopped taking", "former", "previously prescribed",
+                    "medication history", "had.*before", "did.*take",
+                    "prior medications", "past drugs", "former medications",
+                    "what.*was.*on", "medications.*before"
+                ],
+                "weight": 0.9,
+            },
+            
             "ALLERGY_QUERY": {
                 "keywords": [
                     "allerg", "adverse reaction", "contraindicated",
@@ -109,10 +125,20 @@ class TwoLayerIntentClassifier:
                     "pulse", "respiratory", "weight", "height", "bmi",
                     "oxygen", "spo2", "saturation", "vital signs",
                     "how heavy", "how tall", "last recorded", "vital",
-                    "summary", "history", "past", "previous", "trend",
-                    "reading history", "vital history", "vitals summary", "past readings"
+                    "current vitals", "latest vitals", "recent vitals"
                 ],
                 "weight": 0.85,
+            },
+            
+            "VITALS_HISTORY_QUERY": {
+                "keywords": [
+                    "vitals history", "vital history", "past vitals", "previous vitals",
+                    "vitals trend", "vital readings history", "past readings",
+                    "vitals summary", "reading history", "how.*vitals.*changed",
+                    "vitals over time", "chart.*vitals", "vitals.*past",
+                    "last.*vitals", "vitals.*last", "historical vitals"
+                ],
+                "weight": 0.9,
             },
             
             "IMMUNIZATION_QUERY": {
@@ -125,6 +151,49 @@ class TwoLayerIntentClassifier:
                     "immunizations did", "vaccines.*received"
                 ],
                 "weight": 0.9,
+            },
+            
+            "LAB_QUERY": {
+                "keywords": [
+                    "lab", "laboratory", "test", "result", "results",
+                    "blood test", "x-ray", "imaging", "scan",
+                    "culture", "biopsy", "pathology", "serology",
+                    "hemoglobin", "glucose", "cholesterol", "triglyceride",
+                    "urinalysis", "creatinine", "liver function test",
+                    "kidney function", "electrolytes", "albumin",
+                    "CBC", "FBC", "analysis", "report",
+                    "what are.*results", "show.*results", "test results",
+                    "lab results", "lab order", "lab test", "pending test"
+                ],
+                "weight": 0.88,
+            },
+            
+            "ENCOUNTERS_QUERY": {
+                "keywords": [
+                    "encounter", "visit", "appointment", "consultation",
+                    "clinical visit", "doctor visit", "patient visit",
+                    "health encounter", "medical visit", "checkup",
+                    "visit history", "encounter history", "past visits",
+                    "appointment history", "consultation history",
+                    "visited", "came in", "seen at", "attended",
+                    "last visit", "recent visit", "previous visit",
+                    "encounter type", "reason for visit", "chief complaint",
+                    "clinic visit", "hospital visit", "outpatient"
+                ],
+                "weight": 0.87,
+            },
+            
+            "FUTURE_APPOINTMENTS_QUERY": {
+                "keywords": [
+                    "future appointment", "upcoming appointment", "next appointment",
+                    "scheduled appointment", "next visit", "upcoming visit",
+                    "when is appointment", "appointment date", "appointment time",
+                    "scheduled visits", "future visits", "upcoming visits",
+                    "not yet attended", "not yet happened", "coming up",
+                    "future consultation", "upcoming checkup", "scheduled checkup",
+                    "appointment schedule", "future schedule", "what's scheduled"
+                ],
+                "weight": 0.88,
             },
             
             "MILESTONE_QUERY": {
@@ -185,6 +254,15 @@ class TwoLayerIntentClassifier:
                 "Patient medication history",
             ],
             
+            "PAST_MEDICATIONS_QUERY": [
+                "What medications was the patient on before?",
+                "What past medications did patient take?",
+                "Discontinued medications history?",
+                "What medications were previously prescribed?",
+                "Patient's former medication list?",
+                "What drugs did patient used to take?",
+            ],
+            
             "ALLERGY_QUERY": [
                 "Does patient have any allergies?",
                 "Is this drug safe for patient?",
@@ -199,6 +277,16 @@ class TwoLayerIntentClassifier:
                 "Check vital signs",
                 "What's the temperature reading?",
                 "What is SpO2?",
+                "Current vitals?",
+            ],
+            
+            "VITALS_HISTORY_QUERY": [
+                "What is the patient's vitals history?",
+                "Show me past vital readings?",
+                "Vitals trend over time?",
+                "Historical vital signs?",
+                "What were the past vitals?",
+                "Vital signs readings history?",
             ],
             
             "IMMUNIZATION_QUERY": [
@@ -207,6 +295,33 @@ class TwoLayerIntentClassifier:
                 "Which shots are due?",
                 "Immunization history?",
                 "Next vaccine needed?",
+            ],
+            
+            "LAB_QUERY": [
+                "What are the patient's lab results?",
+                "Show me blood test results",
+                "Lab orders placed for patient?",
+                "What tests are pending?",
+                "Patient lab test results?",
+                "Show laboratory analysis",
+            ],
+            
+            "ENCOUNTERS_QUERY": [
+                "What are the patient's visits?",
+                "Show me patient encounters",
+                "Patient visit history?",
+                "When was the last visit?",
+                "Patient appointment history?",
+                "Show clinical encounters",
+            ],
+            
+            "FUTURE_APPOINTMENTS_QUERY": [
+                "What are the patient's upcoming appointments?",
+                "Show me future scheduled appointments",
+                "When is the next appointment?",
+                "What appointments does patient have?",
+                "Upcoming appointments schedule?",
+                "Future visits scheduled?",
             ],
             
             "MILESTONE_QUERY": [

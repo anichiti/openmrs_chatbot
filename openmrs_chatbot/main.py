@@ -16,6 +16,7 @@ from agents.allergy_response import AllergyResponseDoctor, AllergyResponsePatien
 from agents.immunization_openmrs_fetcher import ImmunizationOpenMRSFetcher
 from agents.immunization_response import ImmunizationResponseDoctor, ImmunizationResponsePatient
 from agents.vitals_response import VitalsResponseDoctor, VitalsResponsePatient
+from database.db import OpenMRSDatabase
 from utils.logger import setup_logger
 from utils.config import RESPONSES_FILE
 
@@ -169,8 +170,14 @@ class ClinicalChatbot:
         
         NOTE: If intent is MEDICATION_QUERY, excludes weight/vitals since those are used
         for dose calculation in the medication handler, not direct data return.
+        NOTE: VITALS_HISTORY_QUERY is NOT a direct query - it needs special history formatting.
         """
         import re
+        
+        # EXCLUDE VITALS_HISTORY_QUERY: It should go to dedicated handler, not direct path
+        if intent and intent.upper() == "VITALS_HISTORY_QUERY":
+            return False, None
+        
         question_lower = user_question.lower().strip()
         
         # Patterns for each data type (ORDER MATTERS - check specific patterns first)
@@ -634,6 +641,10 @@ class ClinicalChatbot:
         'MEDICATION_ADMINISTRATION_QUERY', # Administration details
         'MEDICATION_SIDE_EFFECTS_QUERY',   # Side effects from API data
         'VITALS_QUERY',                    # Full clinical vitals
+        'VITALS_HISTORY_QUERY',            # Past vitals history with trends
+        'LAB_QUERY',                       # Lab orders and results
+        'ENCOUNTERS_QUERY',                # Patient visits and encounters
+        'FUTURE_APPOINTMENTS_QUERY',       # Upcoming scheduled appointments
         'IMMUNIZATION_QUERY',              # Immunization records + clinical assessment
         'MILESTONE_QUERY',                 # Developmental milestones
         'PATIENT_RECORD_QUERY',            # Full patient record access
@@ -650,6 +661,10 @@ class ClinicalChatbot:
         'MEDICATION_ADMINISTRATION_QUERY', # How to give medication
         'MEDICATION_SIDE_EFFECTS_QUERY',   # General side effects info
         'VITALS_QUERY',                    # Simplified vitals (growth info)
+        'VITALS_HISTORY_QUERY',            # Past vitals history (simplified for patient)
+        'LAB_QUERY',                       # Lab results (patient-friendly format)
+        'ENCOUNTERS_QUERY',                # Visit history (patient-friendly format)
+        'FUTURE_APPOINTMENTS_QUERY',       # Upcoming appointments (patient-friendly)
         'IMMUNIZATION_QUERY',              # Vaccination history + what's due + missed
         'MILESTONE_QUERY',                 # Age-appropriate milestone tracking
         'PATIENT_RECORD_QUERY',            # Demographics (age, name, gender)
@@ -1429,6 +1444,8 @@ class ClinicalChatbot:
                             for med in past_medications:
                                 response += f"• **{med['drug_name']}**\n"
                                 response += f"  - Status: {med['status']}\n"
+                                if med.get('indication'):
+                                    response += f"  - Indication: {med['indication']}\n"
                                 if med['dose']:
                                     response += f"  - Dose: {med['dose']} {med['dose_units'] or 'unit(s)'}\n"
                                 if med['frequency']:
@@ -1448,12 +1465,14 @@ class ClinicalChatbot:
                             response += "The following medications were given in the past but are no longer being used:\n\n"
                             
                             for med in past_medications:
-                                response += f"• **{med['drug_name']}** "
+                                response += f"• **{med['drug_name']}**\n"
+                                if med.get('indication'):
+                                    response += f"  Used for: {med['indication']}\n"
                                 if med['date_stopped']:
-                                    response += f"(ended {med['date_stopped'][:10]})"
+                                    response += f"  Stopped: {med['date_stopped'][:10]}\n"
                                 response += "\n"
                             
-                            response += "\nIf you need more details about any of these medications or why they were discontinued, "
+                            response += "If you need more details about any of these medications or why they were discontinued, "
                             response += "please contact your doctor or pharmacist."
                         
                         result = {
@@ -2418,7 +2437,587 @@ class ClinicalChatbot:
                     logger.error(f"[VITALS] Error processing vitals query: {e}")
 
         # ====================================================================
-        # IMMUNIZATION_QUERY: "What vaccines has my child received?" or "What vaccines are due?"
+        # VITALS_HISTORY_QUERY: "Show me vitals history" or "Past vital readings"
+        # ====================================================================
+        if intent == "VITALS_HISTORY_QUERY":
+            logger.info(f"[VITALS_HISTORY] Vitals history query detected for patient {patient_id}")
+            
+            if patient_id:
+                try:
+                    # Create database connection
+                    db = OpenMRSDatabase()
+                    
+                    # Resolve patient identifier to internal patient_id if needed
+                    resolved_patient_id = patient_id
+                    
+                    # If patient_id looks like an identifier, convert to internal ID
+                    if not str(resolved_patient_id).isdigit():
+                        # Try to resolve identifier to internal ID
+                        patient_info = db.verify_patient_exists(patient_id)
+                        if patient_info and patient_info.get("patient_id"):
+                            resolved_patient_id = patient_info["patient_id"]
+                            logger.info(f"[VITALS_HISTORY] Resolved identifier {patient_id} to internal ID {resolved_patient_id}")
+                        else:
+                            logger.warning(f"[VITALS_HISTORY] Could not resolve patient identifier: {patient_id}")
+                    
+                    # Get vitals history using internal patient ID
+                    vitals_result = db.get_patient_vitals_history(resolved_patient_id, limit=100)
+                    vitals_history = vitals_result.get("data", []) if isinstance(vitals_result, dict) else vitals_result
+                    logger.info(f"[VITALS_HISTORY] Retrieved {len(vitals_history)} vitals records")
+                    
+                    # Retrieve patient data if not already loaded
+                    if not context_data.get("patient_data"):
+                        validation_status, patient_info, validation_error = self.triage_agent.validate_patient_id(patient_id)
+                        if validation_status is True:
+                            try:
+                                patient_data = self.sql_agent.query_patient_record(patient_id)
+                                context_data["patient_data"] = patient_data
+                                logger.info(f"[VITALS_HISTORY] Patient data retrieved for {patient_id}")
+                            except Exception as e:
+                                logger.error(f"[VITALS_HISTORY] Error retrieving patient data: {e}")
+                    
+                    patient_data = context_data.get("patient_data", {})
+                    patient_info_data = patient_data.get("patient", {}).get("data", [])
+                    
+                    # Extract patient info
+                    patient_name = None
+                    birthdate = None
+                    age_info = None
+                    if patient_info_data:
+                        patient_name = patient_info_data[0].get("given_name")
+                        birthdate = patient_info_data[0].get("birthdate")
+                        
+                        # Calculate age info for patient view
+                        if birthdate:
+                            try:
+                                from dateutil.relativedelta import relativedelta
+                                birthdate_obj = datetime.strptime(birthdate, '%Y-%m-%d').date() if isinstance(birthdate, str) else birthdate
+                                age_delta = relativedelta(datetime.now().date(), birthdate_obj)
+                                age_months = age_delta.years * 12 + age_delta.months
+                                age_years = age_delta.years + age_delta.months / 12
+                                age_info = {'months': age_months, 'years': age_years}
+                            except Exception as e:
+                                logger.debug(f"Error calculating age: {e}")
+                    
+                    # Format vitals history response
+                    if vitals_history:
+                        # Organize vitals by datetime and vital type
+                        from collections import defaultdict
+                        history_by_date = defaultdict(dict)
+                        
+                        # Mapping for deduplicating vital names (English versions take precedence)
+                        vital_normalization = {
+                            "Température (c)": "Temperature (c)",
+                            "Arterial blood oxygen saturation (pulse oximeter)": "SpO2",
+                        }
+                        
+                        for vital in vitals_history:
+                            vital_date = vital.get('obs_datetime', 'Unknown Date')
+                            vital_name = vital.get('vital_name', 'Unknown Vital')
+                            vital_value = vital.get('value_numeric') or vital.get('value_text', 'N/A')
+                            
+                            # Format the value
+                            if isinstance(vital_value, (int, float)):
+                                vital_value = f"{vital_value:.2f}" if isinstance(vital_value, float) else str(vital_value)
+                            
+                            # Normalize vital name (deduplicate English/French versions)
+                            if vital_name in vital_normalization:
+                                vital_name = vital_normalization[vital_name]
+                            
+                            # Only store if not already present (English version takes priority)
+                            if vital_name not in history_by_date[vital_date]:
+                                history_by_date[vital_date][vital_name] = vital_value
+                        
+                        # Build response based on user role
+                        if user_type.lower() == "doctor":
+                            # Doctor view: detailed timeline with all measurements
+                            response = "## Vital Signs History (Past 10 Readings)\n\n"
+                            response += f"**Patient:** {patient_name or 'Unknown'}\n"
+                            response += f"**Patient ID:** {patient_id}\n\n"
+                            
+                            response += "### Timeline of Vital Measurements:\n\n"
+                            
+                            # Sort by date (most recent first)
+                            sorted_dates = sorted(history_by_date.keys(), reverse=True)
+                            for reading_date in sorted_dates:
+                                response += f"**{reading_date}**\n"
+                                vitals_at_date = history_by_date[reading_date]
+                                for vital_name, vital_value in sorted(vitals_at_date.items()):
+                                    response += f"  - {vital_name}: {vital_value}\n"
+                                response += "\n"
+                        else:
+                            # Patient view: simplified timeline
+                            response = "## Your Vital Signs Over Time\n\n"
+                            if patient_name:
+                                response += f"Here are your past vital measurements:\n\n"
+                            
+                            # Sort by date (most recent first)
+                            sorted_dates = sorted(history_by_date.keys(), reverse=True)
+                            measurement_count = 0
+                            for reading_date in sorted_dates:
+                                response += f"**{reading_date}**\n"
+                                vitals_at_date = history_by_date[reading_date]
+                                for vital_name, vital_value in sorted(vitals_at_date.items()):
+                                    response += f"  • {vital_name}: {vital_value}\n"
+                                response += "\n"
+                                measurement_count += 1
+                                if measurement_count >= 10:  # Limit to 10 measurement sets for patient view
+                                    break
+                        
+                        result = {
+                            "timestamp": datetime.now().isoformat(),
+                            "user_type": user_type,
+                            "intent": "VITALS_HISTORY_QUERY",
+                            "question": user_question,
+                            "response": response,
+                            "sources": ["Patient Vitals History + OpenMRS Records"],
+                            "patient_id": patient_id
+                        }
+                        self.save_response(result)
+                        db.disconnect()
+                        logger.info(f"[VITALS_HISTORY] Vitals history provided")
+                        return result
+                    else:
+                        response = "No vitals history found for this patient."
+                        result = {
+                            "timestamp": datetime.now().isoformat(),
+                            "user_type": user_type,
+                            "intent": "VITALS_HISTORY_QUERY",
+                            "question": user_question,
+                            "response": response,
+                            "sources": ["Patient Vitals History + OpenMRS Records"],
+                            "patient_id": patient_id
+                        }
+                        self.save_response(result)
+                        db.disconnect()
+                        return result
+                        
+                except Exception as e:
+                    logger.error(f"[VITALS_HISTORY] Error processing vitals history query: {e}")
+                    try:
+                        db.disconnect()
+                    except:
+                        pass
+
+        # ====================================================================
+        # LAB_QUERY: "What are the patient's lab results?" or "Show me lab orders"
+        # ====================================================================
+        if intent == "LAB_QUERY":
+            logger.info(f"[LAB] Lab query detected for patient {patient_id}")
+            
+            if patient_id:
+                try:
+                    db = OpenMRSDatabase()
+                    resolved_patient_id = patient_id
+                    
+                    # Verify patient ID and resolve if needed
+                    if not str(resolved_patient_id).isdigit():
+                        patient_info = db.verify_patient_exists(patient_id)
+                        if patient_info and patient_info.get("patient_id"):
+                            resolved_patient_id = patient_info["patient_id"]
+                            logger.info(f"[LAB] Resolved patient ID: {resolved_patient_id}")
+                    
+                    # Retrieve lab orders and results
+                    logger.info(f"[LAB] Fetching lab orders for patient {resolved_patient_id}")
+                    lab_orders_result = db.get_patient_lab_orders(resolved_patient_id, limit=50)
+                    lab_orders = lab_orders_result.get("data", []) if lab_orders_result.get("error") is None else []
+                    
+                    logger.info(f"[LAB] Fetching lab results for patient {resolved_patient_id}")
+                    lab_results_result = db.get_patient_lab_results(resolved_patient_id, limit=50)
+                    lab_results = lab_results_result.get("data", []) if lab_results_result.get("error") is None else []
+                    
+                    logger.info(f"[LAB] Retrieved {len(lab_orders)} lab orders and {len(lab_results)} lab results")
+                    
+                    # Deduplicate orders by order_id (each order is unique) and remove language variants
+                    deduplicated_orders = {}
+                    for order in lab_orders:
+                        order_id = order.get("order_id")
+                        if order_id not in deduplicated_orders:
+                            deduplicated_orders[order_id] = order
+                    lab_orders_unique = list(deduplicated_orders.values())
+                    logger.info(f"[LAB] Deduplicated to {len(lab_orders_unique)} unique lab orders")
+                    
+                    # Deduplicate results by concept_id, keeping most recent
+                    deduplicated_results = {}
+                    for result in lab_results:
+                        concept_id = result.get("concept_id")
+                        obs_datetime = result.get("obs_datetime", "")
+                        if concept_id not in deduplicated_results:
+                            deduplicated_results[concept_id] = result
+                        else:
+                            # Keep the more recent one
+                            existing_datetime = deduplicated_results[concept_id].get("obs_datetime", "")
+                            if obs_datetime > existing_datetime:
+                                deduplicated_results[concept_id] = result
+                    lab_results_unique = list(deduplicated_results.values())
+                    logger.info(f"[LAB] Deduplicated to {len(lab_results_unique)} unique lab results")
+                    
+                    # Filter out vitals from lab results to show only actual test results
+                    vitals_terms = [
+                        'blood pressure', 'systolic', 'diastolic', 'sbp', 'dbp',
+                        'temperature', 'temp', 'pulse', 'heart rate', 'respiratory rate',
+                        'respiration', 'rr', 'oxygen saturation', 'spo2', 'spO2',
+                        'height', 'weight', 'circumference', 'muac', 'bmi',
+                        'body mass', 'immunization', 'vaccine'
+                    ]
+                    
+                    lab_results_filtered = []
+                    debug_filtered = []
+                    for result in lab_results_unique:
+                        test_name = result.get("test_name", "").lower()
+                        is_vital = any(vital in test_name for vital in vitals_terms)
+                        if not is_vital:
+                            lab_results_filtered.append(result)
+                        else:
+                            debug_filtered.append(test_name)
+                    
+                    logger.info(f"[LAB] Filtered to {len(lab_results_filtered)} actual lab test results (excluded {len(lab_results_unique) - len(lab_results_filtered)} vitals)")
+                    if debug_filtered:
+                        logger.info(f"[LAB] Filtered test names: {debug_filtered}")
+                    
+                    # Format response based on user type
+                    if user_type.lower() == "patient":
+                        # Patient-friendly format
+                        response_parts = []
+                        response_parts.append("## Your Laboratory Results\n")
+                        
+                        # Recent lab results
+                        if lab_results_filtered:
+                            response_parts.append("### Recent Lab Tests\n")
+                            # Sort by date descending
+                            sorted_results = sorted(lab_results_filtered, key=lambda x: x.get("obs_datetime", ""), reverse=True)
+                            for result in sorted_results[:10]:
+                                test_name = result.get("test_name", "Unknown Test")
+                                obs_datetime = result.get("obs_datetime", "Unknown date")
+                                value = result.get("value_numeric") or result.get("value_text") or "No value"
+                                response_parts.append(f"- **{test_name}**: {value} (as of {obs_datetime})")
+                            response_parts.append("\n")
+                        else:
+                            response_parts.append("*No recent lab results available.*\n\n")
+                        
+                        # Pending lab tests (orders without results)
+                        if lab_orders_unique:
+                            response_parts.append("### Pending Lab Tests\n")
+                            for order in lab_orders_unique[:10]:  # Limit to 10 most recent
+                                test_name = order.get("test_name", "Unknown Test")
+                                urgency = order.get("urgency", "Routine")
+                                date_activated = order.get("date_activated", "Unknown date")
+                                response_parts.append(f"- **{test_name}** - {urgency} (ordered on {date_activated})")
+                            response_parts.append("\n")
+                        else:
+                            response_parts.append("*No pending lab tests.*\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    else:
+                        # Doctor view - detailed clinical format
+                        response_parts = []
+                        response_parts.append("## Patient Laboratory Analysis\n\n")
+                        
+                        # Lab orders with status
+                        if lab_orders_unique:
+                            response_parts.append("### Active Lab Orders\n")
+                            response_parts.append("| Test Name | Urgency | Ordered Date | Status |\n")
+                            response_parts.append("|-----------|---------|--------------|--------|\n")
+                            for order in lab_orders_unique:
+                                test_name = order.get("test_name", "Unknown")
+                                urgency = order.get("urgency", "Routine")
+                                date_activated = order.get("date_activated", "N/A")
+                                date_stopped = order.get("date_stopped")
+                                status = "Completed" if date_stopped else "Active"
+                                response_parts.append(f"| {test_name} | {urgency} | {date_activated} | {status} |\n")
+                            response_parts.append("\n")
+                        else:
+                            response_parts.append("**No lab orders on file.**\n\n")
+                        
+                        # Lab results with values
+                        if lab_results_filtered:
+                            response_parts.append("### Recent Lab Results\n\n")
+                            # Sort by date descending
+                            sorted_results = sorted(lab_results_filtered, key=lambda x: x.get("obs_datetime", ""), reverse=True)
+                            for result in sorted_results[:15]:  # Show up to 15 most recent unique tests
+                                test_name = result.get("test_name", "Unknown Test")
+                                obs_datetime = result.get("obs_datetime", "Unknown")
+                                value_numeric = result.get("value_numeric")
+                                value_text = result.get("value_text")
+                                value = value_numeric if value_numeric else value_text
+                                response_parts.append(f"- **{test_name}**: {value} ({obs_datetime})\n")
+                            response_parts.append("\n")
+                        else:
+                            response_parts.append("**No lab results available.**\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    # Prepare result with metadata
+                    result = {
+                        "response": response,
+                        "intent": "LAB_QUERY",
+                        "sources": ["OpenMRS Lab Orders", "OpenMRS Lab Results"],
+                        "patient_id": resolved_patient_id,
+                        "context_data": {
+                            "lab_orders_count": len(lab_orders),
+                            "lab_results_count": len(lab_results)
+                        }
+                    }
+                    
+                    db.disconnect()
+                    return result
+                    
+                except Exception as e:
+                    logger.error(f"[LAB] Error retrieving lab data: {str(e)}", exc_info=True)
+                    response = f"❌ Error retrieving lab information: {str(e)}"
+                    result = {
+                        "response": response,
+                        "intent": "LAB_QUERY",
+                        "sources": ["Error"],
+                        "patient_id": patient_id
+                    }
+                    return result
+            else:
+                response = "⚠️ No patient selected. Please select a patient first."
+                result = {
+                    "response": response,
+                    "intent": "LAB_QUERY",
+                    "sources": ["Error"],
+                    "patient_id": None
+                }
+                return result
+
+        # ====================================================================
+        # ENCOUNTERS_QUERY: "What are the patient's visits?" or "Show me encounters"
+        # ====================================================================
+        if intent == "ENCOUNTERS_QUERY":
+            logger.info(f"[ENCOUNTERS] Encounters query detected for patient {patient_id}")
+            
+            if patient_id:
+                try:
+                    db = OpenMRSDatabase()
+                    resolved_patient_id = patient_id
+                    
+                    # Verify patient ID and resolve if needed
+                    if not str(resolved_patient_id).isdigit():
+                        patient_info = db.verify_patient_exists(patient_id)
+                        if patient_info and patient_info.get("patient_id"):
+                            resolved_patient_id = patient_info["patient_id"]
+                            logger.info(f"[ENCOUNTERS] Resolved patient ID: {resolved_patient_id}")
+                    
+                    # Retrieve encounters and visits
+                    logger.info(f"[ENCOUNTERS] Fetching encounters for patient {resolved_patient_id}")
+                    encounters_result = db.get_patient_encounters(resolved_patient_id, limit=100)
+                    encounters = encounters_result.get("data", []) if encounters_result.get("error") is None else []
+                    
+                    logger.info(f"[ENCOUNTERS] Retrieved {len(encounters)} encounters")
+                    
+                    # Get patient details (name, age, etc.)
+                    patient_result = db.get_patient_by_id(resolved_patient_id)
+                    patient_name = "Unknown"
+                    if patient_result.get("data"):
+                        patient_data = patient_result["data"][0]
+                        given_name = patient_data.get("given_name", "")
+                        family_name = patient_data.get("family_name", "")
+                        patient_name = f"{given_name} {family_name}".strip()
+                    
+                    # Format response based on user type
+                    if user_type.lower() == "patient":
+                        # Patient-friendly format
+                        response_parts = []
+                        response_parts.append(f"## Your Visit History\n\n")
+                        response_parts.append(f"Patient: **{patient_name}**\n\n")
+                        
+                        if encounters:
+                            response_parts.append(f"### Recent Visits ({len(encounters)} total)\n\n")
+                            # Sort by date descending (most recent first) and limit to recent 10
+                            sorted_encounters = sorted(encounters, key=lambda x: x.get("encounter_datetime", ""), reverse=True)
+                            for i, encounter in enumerate(sorted_encounters[:10], 1):
+                                encounter_datetime = encounter.get("encounter_datetime", "Unknown date")
+                                encounter_type = encounter.get("encounter_type_name", "General Visit")
+                                location = encounter.get("location_id", "Unknown location")
+                                response_parts.append(f"{i}. **{encounter_type}** - {encounter_datetime}\n")
+                            
+                            if len(sorted_encounters) > 10:
+                                response_parts.append(f"\n... and {len(sorted_encounters) - 10} more visits\n")
+                        else:
+                            response_parts.append("*No visit records found.*\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    else:
+                        # Doctor view - detailed clinical format
+                        response_parts = []
+                        response_parts.append(f"## Patient Encounters Report\n\n")
+                        response_parts.append(f"**Patient:** {patient_name}\n")
+                        response_parts.append(f"**Total Encounters:** {len(encounters)}\n\n")
+                        
+                        if encounters:
+                            response_parts.append("### Clinical Encounter History\n\n")
+                            response_parts.append("| Date & Time | Encounter Type | Location | Encounter ID |\n")
+                            response_parts.append("|-------------|----------------|----------|---------------|\n")
+                            
+                            # Sort by date descending (most recent first)
+                            sorted_encounters = sorted(encounters, key=lambda x: x.get("encounter_datetime", ""), reverse=True)
+                            for encounter in sorted_encounters:
+                                encounter_id = encounter.get("encounter_id", "N/A")
+                                encounter_datetime = encounter.get("encounter_datetime", "Unknown")
+                                encounter_type = encounter.get("encounter_type_name", "General")
+                                location_id = encounter.get("location_id", "N/A")
+                                response_parts.append(f"| {encounter_datetime} | {encounter_type} | {location_id} | {encounter_id} |\n")
+                        else:
+                            response_parts.append("**No encounters documented.**\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    # Prepare result with metadata
+                    result = {
+                        "response": response,
+                        "intent": "ENCOUNTERS_QUERY",
+                        "sources": ["OpenMRS Encounters"],
+                        "patient_id": resolved_patient_id,
+                        "context_data": {
+                            "encounters_count": len(encounters)
+                        }
+                    }
+                    
+                    db.disconnect()
+                    return result
+                    
+                except Exception as e:
+                    logger.error(f"[ENCOUNTERS] Error retrieving encounter data: {str(e)}", exc_info=True)
+                    response = f"❌ Error retrieving encounter information: {str(e)}"
+                    result = {
+                        "response": response,
+                        "intent": "ENCOUNTERS_QUERY",
+                        "sources": ["Error"],
+                        "patient_id": patient_id
+                    }
+                    return result
+            else:
+                response = "⚠️ No patient selected. Please select a patient first."
+                result = {
+                    "response": response,
+                    "intent": "ENCOUNTERS_QUERY",
+                    "sources": ["Error"],
+                    "patient_id": None
+                }
+                return result
+
+        # ====================================================================
+        # FUTURE_APPOINTMENTS_QUERY: "What are my upcoming appointments?"
+        # ====================================================================
+        if intent == "FUTURE_APPOINTMENTS_QUERY":
+            logger.info(f"[FUTURE_APPTS] Future appointments query detected for patient {patient_id}")
+            
+            if patient_id:
+                try:
+                    db = OpenMRSDatabase()
+                    resolved_patient_id = patient_id
+                    
+                    # Verify patient ID and resolve if needed
+                    if not str(resolved_patient_id).isdigit():
+                        patient_info = db.verify_patient_exists(patient_id)
+                        if patient_info and patient_info.get("patient_id"):
+                            resolved_patient_id = patient_info["patient_id"]
+                            logger.info(f"[FUTURE_APPTS] Resolved patient ID: {resolved_patient_id}")
+                    
+                    # Retrieve future appointments
+                    logger.info(f"[FUTURE_APPTS] Fetching future appointments for patient {resolved_patient_id}")
+                    appointments_result = db.get_patient_appointments_future(resolved_patient_id, limit=100)
+                    appointments = appointments_result.get("data", []) if appointments_result.get("error") is None else []
+                    
+                    logger.info(f"[FUTURE_APPTS] Retrieved {len(appointments)} future appointments")
+                    
+                    # Get patient details (name, age, etc.)
+                    patient_result = db.get_patient_by_id(resolved_patient_id)
+                    patient_name = "Unknown"
+                    if patient_result.get("data"):
+                        patient_data = patient_result["data"][0]
+                        given_name = patient_data.get("given_name", "")
+                        family_name = patient_data.get("family_name", "")
+                        patient_name = f"{given_name} {family_name}".strip()
+                    
+                    # Format response based on user type
+                    if user_type.lower() == "patient":
+                        # Patient-friendly format
+                        response_parts = []
+                        response_parts.append(f"## Your Upcoming Appointments\n\n")
+                        response_parts.append(f"Patient: **{patient_name}**\n\n")
+                        
+                        if appointments:
+                            response_parts.append(f"### Scheduled Appointments ({len(appointments)} total)\n\n")
+                            # Sort by date ascending (soonest first)
+                            sorted_appointments = sorted(appointments, key=lambda x: x.get("start_date_time", ""), reverse=False)
+                            for i, appt in enumerate(sorted_appointments, 1):
+                                start_time = appt.get("start_date_time", "Unknown date")
+                                end_time = appt.get("end_date_time", "")
+                                service = appt.get("service_name", "General Appointment")
+                                status = appt.get("status", "")
+                                response_parts.append(f"{i}. **{service}** - {start_time}\n")
+                                if status:
+                                    response_parts.append(f"   Status: {status}\n")
+                        else:
+                            response_parts.append("*No upcoming appointments scheduled.*\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    else:
+                        # Doctor view - detailed format
+                        response_parts = []
+                        response_parts.append(f"## Patient Future Appointments Report\n\n")
+                        response_parts.append(f"**Patient:** {patient_name}\n")
+                        response_parts.append(f"**Upcoming Appointments:** {len(appointments)}\n\n")
+                        
+                        if appointments:
+                            response_parts.append("### Scheduled Appointments\n\n")
+                            response_parts.append("| Start Date/Time | End Date/Time | Service | Status | Location |\n")
+                            response_parts.append("|-----------------|---------------|---------|--------|----------|\n")
+                            
+                            # Sort by date ascending (soonest first)
+                            sorted_appointments = sorted(appointments, key=lambda x: x.get("start_date_time", ""), reverse=False)
+                            for appt in sorted_appointments:
+                                start_time = appt.get("start_date_time", "N/A")
+                                end_time = appt.get("end_date_time", "N/A")
+                                service = appt.get("service_name", "General")
+                                status = appt.get("status", "Scheduled")
+                                location = appt.get("location_id", "N/A")
+                                response_parts.append(f"| {start_time} | {end_time} | {service} | {status} | {location} |\n")
+                        else:
+                            response_parts.append("**No upcoming appointments scheduled.**\n")
+                        
+                        response = "".join(response_parts)
+                    
+                    # Prepare result with metadata
+                    result = {
+                        "response": response,
+                        "intent": "FUTURE_APPOINTMENTS_QUERY",
+                        "sources": ["OpenMRS Appointments"],
+                        "patient_id": resolved_patient_id,
+                        "context_data": {
+                            "appointments_count": len(appointments)
+                        }
+                    }
+                    
+                    db.disconnect()
+                    return result
+                    
+                except Exception as e:
+                    logger.error(f"[FUTURE_APPTS] Error retrieving appointment data: {str(e)}", exc_info=True)
+                    response = f"❌ Error retrieving appointment information: {str(e)}"
+                    result = {
+                        "response": response,
+                        "intent": "FUTURE_APPOINTMENTS_QUERY",
+                        "sources": ["Error"],
+                        "patient_id": patient_id
+                    }
+                    return result
+            else:
+                response = "⚠️ No patient selected. Please select a patient first."
+                result = {
+                    "response": response,
+                    "intent": "FUTURE_APPOINTMENTS_QUERY",
+                    "sources": ["Error"],
+                    "patient_id": None
+                }
+                return result
+
         # ====================================================================
         if intent == "IMMUNIZATION_QUERY":
             logger.info(f"[IMMUNIZATION] Immunization query detected for patient {patient_id}")
@@ -2500,20 +3099,24 @@ class ClinicalChatbot:
                             )
                     
                     elif asking_for_history:
-                        logger.info(f"[IMMUNIZATION] Question asks for LAST/MOST RECENT VACCINATION")
+                        logger.info(f"[IMMUNIZATION] Question asks for COMPLETE IMMUNIZATION HISTORY")
                         history = immun_fetcher.get_immunization_history(patient_id)
+                        recommendations = immun_fetcher.get_recommended_vaccines(patient_id)
                         
                         if user_type.lower() == "patient":
-                            response = ImmunizationResponsePatient.format_last_administered_vaccine(
+                            response = ImmunizationResponsePatient.format_immunization_records(
                                 history=history,
+                                recommendations=recommendations,
                                 patient_name=patient_name,
                                 age_info=age_info
                             )
                         else:  # Doctor
-                            response = ImmunizationResponseDoctor.format_last_administered_vaccine(
+                            response = ImmunizationResponseDoctor.format_immunization_records(
                                 history=history,
+                                recommendations=recommendations,
                                 patient_id=patient_id,
-                                patient_name=patient_name
+                                patient_name=patient_name,
+                                age_info=age_info
                             )
                     
                     elif asking_for_missed:

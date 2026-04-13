@@ -101,7 +101,8 @@ class OpenMRSDatabase:
 
     def get_patient_encounters(self, patient_id, limit=100):
         query = """
-        SELECT e.encounter_id, e.patient_id, e.encounter_type, e.encounter_datetime,
+        SELECT e.encounter_id, e.patient_id, e.encounter_type,
+               DATE_SUB(e.encounter_datetime, INTERVAL 4 HOUR) as encounter_datetime,
                e.location_id, et.name as encounter_type_name
         FROM encounter e
         LEFT JOIN encounter_type et ON e.encounter_type = et.encounter_type_id
@@ -111,13 +112,48 @@ class OpenMRSDatabase:
         """
         return self.execute_query(query, (patient_id, limit))
 
+    def get_patient_appointments(self, patient_id, limit=100):
+        """Get scheduled appointments for patient with timezone offset applied"""
+        query = """
+        SELECT pa.patient_appointment_id, pa.appointment_number,
+               DATE_SUB(pa.start_date_time, INTERVAL 4 HOUR) as start_date_time,
+               DATE_SUB(pa.end_date_time, INTERVAL 4 HOUR) as end_date_time,
+               pa.status, pa.appointment_kind, pa.location_id, pa.comments,
+               appt_service.name as service_name
+        FROM patient_appointment pa
+        LEFT JOIN appointment_service appt_service ON pa.appointment_service_id = appt_service.appointment_service_id
+        WHERE pa.patient_id = %s AND pa.voided = false
+        ORDER BY pa.start_date_time DESC
+        LIMIT %s
+        """
+        return self.execute_query(query, (patient_id, limit))
+    
+    def get_patient_appointments_future(self, patient_id, limit=100):
+        """Get future scheduled appointments for patient"""
+        query = """
+        SELECT pa.patient_appointment_id, pa.appointment_number,
+               DATE_SUB(pa.start_date_time, INTERVAL 4 HOUR) as start_date_time,
+               DATE_SUB(pa.end_date_time, INTERVAL 4 HOUR) as end_date_time,
+               pa.status, pa.appointment_kind, pa.location_id, pa.comments,
+               appt_service.name as service_name
+        FROM patient_appointment pa
+        LEFT JOIN appointment_service appt_service ON pa.appointment_service_id = appt_service.appointment_service_id
+        WHERE pa.patient_id = %s AND pa.voided = false
+        AND pa.start_date_time > NOW()
+        ORDER BY pa.start_date_time ASC
+        LIMIT %s
+        """
+        return self.execute_query(query, (patient_id, limit))
+
     def get_patient_conditions(self, patient_id):
         query = """
         SELECT c.condition_id, c.patient_id, c.condition_coded, c.onset_date,
-               c.end_date, cn.name as condition_name
+               c.end_date, COALESCE(MAX(cn_en.name), MAX(cn.name)) as condition_name
         FROM conditions c
-        LEFT JOIN concept_name cn ON c.condition_coded = cn.concept_id
-        WHERE c.patient_id = %s
+        LEFT JOIN concept_name cn_en ON c.condition_coded = cn_en.concept_id AND cn_en.locale = 'en' AND cn_en.voided = false
+        LEFT JOIN concept_name cn ON c.condition_coded = cn.concept_id AND cn.voided = false
+        WHERE c.patient_id = %s AND c.voided = false
+        GROUP BY c.condition_id, c.patient_id, c.condition_coded, c.onset_date, c.end_date
         ORDER BY c.onset_date DESC
         """
         return self.execute_query(query, (patient_id,))
@@ -177,6 +213,68 @@ class OpenMRSDatabase:
         )
         """
         return self.execute_query(query, (patient_id,))
+
+    def get_patient_vitals_history(self, patient_id, limit=100):
+        """Get past vitals readings for patient (all records up to limit, default 100)
+        Returns all vital observations sorted by date (most recent first)
+        Limit applies to total rows, not observation dates, so increase for comprehensive history
+        """
+        query = """
+        SELECT cn.name as vital_name, o.value_numeric, o.value_text, o.obs_datetime
+        FROM obs o
+        JOIN concept_name cn ON o.concept_id = cn.concept_id
+        WHERE o.person_id = %s 
+        AND o.voided = false
+        AND cn.name IN ('Height (cm)', 'Weight (kg)', 'Systolic Blood Pressure', 
+                        'Diastolic Blood Pressure', 'Temperature (C)', 'Blood Pressure',
+                        'Temperature', 'Température (c)',
+                        'Height', 'Weight', 'BP', 'Temp', 'BMI', 'Body Mass Index',
+                        'Body mass index', 'BMI (kg/m2)', 'BMI (kg/m²)',
+                        'Pulse', 'Heart Rate', 'Heart rate', 'Pulse Rate',
+                        'Respiratory Rate', 'Respiratory rate', 'Respiration Rate',
+                        'Blood Oxygen Saturation', 'Oxygen Saturation', 'SpO2',
+                        'Arterial blood oxygen saturation (pulse oximeter)',
+                        'Head Circumference', 'Head circumference (cm)',
+                        'Mid-Upper Arm Circumference', 'MUAC')
+        ORDER BY o.obs_datetime DESC
+        LIMIT %s
+        """
+        return self.execute_query(query, (patient_id, limit))
+
+    def get_patient_lab_orders(self, patient_id, limit=50):
+        """Get lab orders placed for patient (deduplicated by concept)"""
+        query = """
+        SELECT DISTINCT o.order_id, o.patient_id, o.concept_id, o.order_type_id, o.urgency, 
+               o.date_activated, o.date_stopped, 
+               COALESCE(cn_en.name, cn.name) as test_name, ot.name as order_type_name
+        FROM orders o
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id AND cn.voided = false
+        LEFT JOIN concept_name cn_en ON o.concept_id = cn_en.concept_id AND cn_en.locale = 'en' AND cn_en.voided = false
+        LEFT JOIN order_type ot ON o.order_type_id = ot.order_type_id
+        WHERE o.patient_id = %s 
+        AND o.voided = false
+        AND ot.name IN ('Lab', 'Test Order', 'Test')
+        ORDER BY o.date_activated DESC
+        LIMIT %s
+        """
+        return self.execute_query(query, (patient_id, limit))
+
+    def get_patient_lab_results(self, patient_id, limit=50):
+        """Get lab test results for patient - observations with values"""
+        query = """
+        SELECT o.obs_id, o.person_id, o.concept_id, o.obs_datetime,
+               o.value_numeric, o.value_text, o.value_coded,
+               COALESCE(cn_en.name, cn.name) as test_name
+        FROM obs o
+        LEFT JOIN concept_name cn ON o.concept_id = cn.concept_id
+        LEFT JOIN concept_name cn_en ON o.concept_id = cn_en.concept_id AND cn_en.locale = 'en'
+        WHERE o.person_id = %s 
+        AND o.voided = false
+        AND (o.value_numeric IS NOT NULL OR o.value_text IS NOT NULL OR o.value_coded IS NOT NULL)
+        ORDER BY o.obs_datetime DESC
+        LIMIT %s
+        """
+        return self.execute_query(query, (patient_id, limit))
 
     def verify_patient_exists(self, patient_id):
         """Verify if a patient ID exists in the database and return full patient details

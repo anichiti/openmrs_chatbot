@@ -78,7 +78,7 @@ class MedicationOpenMRSFetcher:
             
             cursor = self.db.connection.cursor()
             
-            # Query active medications
+            # Query active medications with indication/reason
             # Use AUTO_EXPIRE_DATE as primary indicator (set by OpenMRS based on dosing instructions)
             # Falls back to DATE_STOPPED if AUTO_EXPIRE_DATE is not set
             query = '''
@@ -92,7 +92,8 @@ class MedicationOpenMRSFetcher:
                 do.DOSE_UNITS,
                 do.FREQUENCY,
                 do.DOSING_INSTRUCTIONS,
-                do.ROUTE
+                do.ROUTE,
+                COALESCE(o.ORDER_REASON_NON_CODED, o.ORDER_REASON) as INDICATION
             FROM orders o
             JOIN drug_order do ON o.ORDER_ID = do.ORDER_ID
             JOIN drug d ON do.DRUG_INVENTORY_ID = d.DRUG_ID
@@ -117,6 +118,9 @@ class MedicationOpenMRSFetcher:
                 else:
                     route_text = str(route) if route else 'Oral'
                 
+                # Get indication/reason from ORDER_REASON field
+                indication = row[10] if row[10] else 'Not specified'
+                
                 med = {
                     'order_id': row[0],
                     'date_activated': str(row[1]) if row[1] else None,
@@ -128,7 +132,7 @@ class MedicationOpenMRSFetcher:
                     'frequency': row[7],
                     'instructions': row[8],
                     'route': route_text,
-                    'indication': 'Condition management'  # Default indication when not available
+                    'indication': indication
                 }
                 medications.append(med)
             
@@ -161,7 +165,7 @@ class MedicationOpenMRSFetcher:
             
             cursor = self.db.connection.cursor()
             
-            # Query past/discontinued medications
+            # Query past/discontinued medications with indication/reason
             # Use AUTO_EXPIRE_DATE as primary indicator (set by OpenMRS based on dosing instructions)
             # Falls back to DATE_STOPPED if AUTO_EXPIRE_DATE is not set
             query = '''
@@ -175,7 +179,8 @@ class MedicationOpenMRSFetcher:
                 do.DOSE_UNITS,
                 do.FREQUENCY,
                 do.DOSING_INSTRUCTIONS,
-                do.ROUTE
+                do.ROUTE,
+                COALESCE(o.ORDER_REASON_NON_CODED, o.ORDER_REASON) as INDICATION
             FROM orders o
             JOIN drug_order do ON o.ORDER_ID = do.ORDER_ID
             JOIN drug d ON do.DRUG_INVENTORY_ID = d.DRUG_ID
@@ -200,6 +205,9 @@ class MedicationOpenMRSFetcher:
                 else:
                     route_text = str(route) if route else 'Oral'
                 
+                # Get indication/reason from ORDER_REASON field
+                indication = row[10] if row[10] else 'Not specified'
+                
                 med = {
                     'order_id': row[0],
                     'date_activated': str(row[1]) if row[1] else None,
@@ -212,7 +220,7 @@ class MedicationOpenMRSFetcher:
                     'instructions': row[8],
                     'route': route_text,
                     'status': 'Discontinued',
-                    'indication': 'Previously treated condition'
+                    'indication': indication
                 }
                 medications.append(med)
             
