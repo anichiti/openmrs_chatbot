@@ -1,7 +1,9 @@
 import json
 import os
+import re
 from utils.logger import setup_logger
-from utils.config import MEDICATION_DB, IMMUNIZATION_DB, MILESTONE_DB
+from utils.config import MEDICATION_DB, IMMUNIZATION_DB, MILESTONE_DB, PATIENT_KB_DIR
+from utils.milestone_pdf_extractor import MilestonePDFExtractor
 
 logger = setup_logger(__name__)
 
@@ -21,6 +23,18 @@ class MCPAgent:
         self.medication_db = self._load_json(MEDICATION_DB)
         self.immunization_db = self._load_json(IMMUNIZATION_DB)
         self.milestone_db = self._load_json(MILESTONE_DB)
+        
+        # Initialize milestone PDF extractor
+        self.milestone_pdf_extractor = None
+        try:
+            pdf_path = os.path.join(PATIENT_KB_DIR, "cdc-milestone-checklists-ltsae-english-508.pdf")
+            if os.path.exists(pdf_path):
+                self.milestone_pdf_extractor = MilestonePDFExtractor(pdf_path)
+                logger.info("Milestone PDF extractor initialized successfully")
+            else:
+                logger.warning(f"Milestone PDF not found at {pdf_path}")
+        except Exception as e:
+            logger.warning(f"Failed to initialize milestone PDF extractor: {e}")
         
         # Initialize medication components for enhanced medication queries
         if ANI_AVAILABLE:
@@ -315,26 +329,58 @@ class MCPAgent:
         Search milestones with age extraction and semantic matching.
         Parses query like "what milestones should patient reach? (Patient age: 4 years)"
         and returns milestones for that age group.
+        
+        Priority:
+        1. Use CDC Milestone PDF (covers 3-60 months) if available and loaded
+        2. Fall back to local JSON database for compatibility
         """
         results = []
+        
+        # Extract age from query (looks for pattern like "(Patient age: 4 years)" or "(Patient age: 12 months)")
+        age_months = None
+        age_match = re.search(r'\(Patient age: (\d+)\s*(year|month)s?\)', query_text)
+        if age_match:
+            age_value = int(age_match.group(1))
+            age_unit = age_match.group(2).lower()
+            
+            # Convert to months based on unit
+            if age_unit.startswith('year'):
+                age_months = age_value * 12
+            else:  # 'month'
+                age_months = age_value
+        
+        # PRIMARY: Try to use PDF extractor first (covers 3-60 months)
+        if self.milestone_pdf_extractor and self.milestone_pdf_extractor.is_loaded:
+            logger.info(f"Using CDC Milestone PDF for milestone search")
+            if age_months:
+                logger.info(f"Searching PDF milestones for age: {age_months} months")
+                pdf_results = self.milestone_pdf_extractor.search_milestones(age_months=age_months)
+                if pdf_results.get('results'):
+                    # Format results to match expected structure
+                    formatted_results = []
+                    for item in pdf_results['results']:
+                        formatted_results.append({
+                            "age_months": item.get('age_months'),
+                            "type": item.get('type', 'Unknown'),
+                            "milestones": item.get('milestones', [])
+                        })
+                    return {
+                        "results": formatted_results,
+                        "count": len(formatted_results),
+                        "source": "CDC Milestone Checklist PDF"
+                    }
+                # If PDF has a note (age out of range), return that
+                if pdf_results.get('note'):
+                    return pdf_results
+        
+        # FALLBACK: Use JSON database if PDF is not available
+        logger.info(f"Falling back to JSON milestone database")
         if not self.milestone_db:
             return {"results": results, "count": 0}
 
-        # Extract age from query (looks for pattern like "(Patient age: 4 years)")
-        age_months = None
-        import re
-        age_match = re.search(r'\(Patient age: (\d+)\s*(?:year|month)s?\)', query_text)
-        if age_match:
-            age_value = int(age_match.group(1))
-            # Convert years to months if necessary
-            if age_value < 36:  # Likely in years if less than 36 months (3 years)
-                age_months = age_value * 12
-            else:
-                age_months = age_value
-        
         # If we found an age, use query_milestone_db with structured search
         if age_months:
-            logger.info(f"Searching milestones for age: {age_months} months")
+            logger.info(f"Searching JSON milestones for age: {age_months} months")
             return self.query_milestone_db(age_months=age_months)
         
         # Fallback: search by milestone type or keyword matching
