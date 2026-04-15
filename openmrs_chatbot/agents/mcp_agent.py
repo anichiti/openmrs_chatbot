@@ -320,28 +320,56 @@ class MCPAgent:
         if not self.milestone_db:
             return {"results": results, "count": 0}
 
-        # Extract age from query (looks for pattern like "(Patient age: 4 years)")
+        # Extract age from query (looks for pattern like "(Patient age: 4 years)" or "(Patient age: 11 months)")
         age_months = None
         import re
-        age_match = re.search(r'\(Patient age: (\d+)\s*(?:year|month)s?\)', query_text)
+        age_match = re.search(r'\(Patient age: (\d+)\s*(year|month)s?\)', query_text)
         if age_match:
             age_value = int(age_match.group(1))
-            # Convert years to months if necessary
-            if age_value < 36:  # Likely in years if less than 36 months (3 years)
-                age_months = age_value * 12
-            else:
+            age_unit = age_match.group(2).lower()
+            
+            # Convert to months based on the specified unit
+            if 'month' in age_unit:
                 age_months = age_value
+            else:  # 'year' in age_unit
+                age_months = age_value * 12
         
         # If we found an age, use query_milestone_db with structured search
         if age_months:
             logger.info(f"Searching milestones for age: {age_months} months")
             return self.query_milestone_db(age_months=age_months)
         
-        # Fallback: search by milestone type or keyword matching
+        # Fallback: search by milestone type or keyword matching with domain filtering
+        # Map keywords to developmental domains
+        domain_keywords = {
+            'Motor': ['crawl', 'walk', 'sit', 'stand', 'roll', 'grasp', 'reach', 'push', 'pull', 'motor', 'movement', 'physical'],
+            'Communication': ['speak', 'talk', 'language', 'word', 'sound', 'communication', 'voice', 'babble', 'coo', 'verbalize'],
+            'Cognitive': ['cognitive', 'understand', 'learn', 'think', 'memory', 'problem', 'object', 'hide', 'peek-a-boo'],
+            'Social/Emotional': ['smile', 'recognize', 'social', 'emotional', 'emotion', 'attach', 'fear', 'stranger', 'laugh', 'play']
+        }
+        
+        # Detect which domain the query is asking about
+        query_lower = query_text.lower()
+        target_domain = None
+        for domain, keywords in domain_keywords.items():
+            if any(kw in query_lower for kw in keywords):
+                target_domain = domain
+                logger.info(f"Detected milestone domain filter: {domain} based on query")
+                break
+        
         milestones = self.milestone_db.get("milestones", [])
         for milestone in milestones:
-            if (query_text.lower() in str(milestone.get("type", "")).lower() or
-                any(query_text.lower() in m.lower() for m in milestone.get("milestones", []))):
-                results.append(milestone)
+            milestone_type = milestone.get("type", "")
+            milestone_text = str(milestone.get("milestones", []))
+            
+            # If we detected a specific domain, filter by that domain
+            if target_domain:
+                if target_domain in milestone_type:
+                    results.append(milestone)
+            else:
+                # No domain detected, do generic search
+                if (query_text.lower() in milestone_type.lower() or
+                    any(query_text.lower() in m.lower() for m in milestone.get("milestones", []))):
+                    results.append(milestone)
 
         return {"results": results, "count": len(results)}

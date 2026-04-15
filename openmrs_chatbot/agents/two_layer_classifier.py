@@ -51,7 +51,7 @@ class TwoLayerIntentClassifier:
         self.INTENT_KEYWORDS = {
             "DRUG_INFORMATION_QUERY": {
                 "keywords": [
-                    "side effect", "adverse", "contraindication", "warning",
+                    "side effect", "adverse", "warning",
                     "interaction", "pregnant", "pregnancy", "nursing", "breastfeed",
                     "mechanism", "how does.*work", "what causes", "allergy",
                     "reaction", "safe.*pregnant", "safe.*nursing", "safe.*breastfeed",
@@ -59,7 +59,7 @@ class TwoLayerIntentClassifier:
                     "fda approved", "clinical uses", "what is.*used",
                     "metabolism", "elimination", "dosing", "frequency"
                 ],
-                "weight": 0.95,  # Very high weight - specific drug info queries
+                "weight": 0.9,  # Reduced from 0.95 to match IMMUNIZATION
             },
 
             "MEDICATION_EMERGENCY": {
@@ -112,7 +112,9 @@ class TwoLayerIntentClassifier:
                     "should not be given", "safe to give", "can.*take",
                     "reaction to", "intolerant", "hypersensitiv",
                     "avoid giving", "can.*have", "reaction",
-                    "avoid.*medicine", "avoid.*drug", "prescribe",
+                    "avoid.*medicine", "avoid.*drug", "avoid.*given",
+                    "should.*avoid", "medicines.*avoid", "drugs.*avoid",
+                    "what.*avoid", "which.*avoid", "prescribe",
                     "can.*prescribe", "can i give", "can we give",
                     "takes", "take", "happens if", "what if"
                 ],
@@ -148,9 +150,17 @@ class TwoLayerIntentClassifier:
                     "booster", "vaccine due", "vaccination record", "immunized",
                     "shots received", "vaccines given", "up to date",
                     "vaccination history", "immunization history", "did.*get",
-                    "immunizations did", "vaccines.*received"
+                    "immunizations did", "vaccines.*received",
+                    "what vaccine", "what vaccines", "next vaccine", "next scheduled",
+                    "vaccines due", "due for.*vaccine", "mmr vaccine", "dpt vaccine",
+                    "covid.*vaccine", "polio vaccine", "influenza vaccine",
+                    "vaccine contraindication", "vaccine contraindications", 
+                    "vaccine side effect", "vaccine side effects", "vaccine risk",
+                    "vaccine adverse", "vaccine allergy", "vaccine safety",
+                    "vaccination schedule", "vaccine schedule", "immunization schedule",
+                    "still due", "still needs", "overdue.*vaccine"
                 ],
-                "weight": 0.9,
+                "weight": 0.95,  # Increased to match DRUG_INFORMATION (removed contraindication from there)
             },
             
             "LAB_QUERY": {
@@ -269,6 +279,8 @@ class TwoLayerIntentClassifier:
                 "What medications are contraindicated?",
                 "Patient allergic to penicillin?",
                 "Drug adverse reactions documented?",
+                "What medicines should my child avoid?",
+                "Which drugs should we avoid giving?",
             ],
             
             "VITALS_QUERY": [
@@ -330,6 +342,9 @@ class TwoLayerIntentClassifier:
                 "Normal development for age?",
                 "Child development status?",
                 "Achieved developmental goals?",
+                "When should a baby start crawling?",
+                "When should my child start speaking?",
+                "What milestones should my baby reach by 12 months?",
             ],
             
             "PATIENT_RECORD_QUERY": [
