@@ -483,45 +483,96 @@ class ClinicalChatbot:
             search_terms = vital_name_map.get(query_type, [])
             matches = []
             
-            # First try to find in recent vitals (same date as most recent)
-            for vital in recent_vitals:
-                vname = vital.get('vital_name', vital.get('concept_name', '')).lower()
-                if any(term in vname for term in search_terms):
-                    value = vital.get('value_numeric') or vital.get('value_text', 'N/A')
-                    display_name = vital.get('vital_name', vital.get('concept_name', 'Unknown'))
-                    # Skip non-English duplicates
-                    if all(ord(c) < 128 or c in '°²/' for c in display_name):
-                        # Append reference range (Issue 7)
-                        if query_type in ref_ranges:
-                            ref_info = ref_ranges[query_type]
-                            if isinstance(ref_info, tuple) and len(ref_info) >= 2:
-                                if isinstance(ref_info[0], str) and ref_info[0].startswith('Systolic'):
-                                    # Blood pressure has split format
-                                    matches.append(f"{ref_info[0]} {ref_info[2]}")
-                                    matches.append(f"{ref_info[1]} {ref_info[2]}")
-                                else:
-                                    # Standard format: (min, max, unit)
-                                    ref_range = f"{ref_info[0]}-{ref_info[1]} {ref_info[2]}"
-                                    matches.append(f"{display_name}: {value} {ref_info[2]}  (Reference: {ref_range})")
-                            else:
-                                matches.append(f"{display_name}: {value}")
-                        else:
-                            matches.append(f"{display_name}: {value}")
-            
-            # If not found in recent vitals, look for most recent historical value
-            if not matches:
-                for vital in vitals_data:
+            # Special handling for blood pressure to avoid duplication
+            if query_type == 'blood_pressure':
+                systolic_val = None
+                diastolic_val = None
+                
+                for vital in recent_vitals:
+                    vname = vital.get('vital_name', vital.get('concept_name', '')).lower()
+                    if 'systolic' in vname:
+                        systolic_val = vital.get('value_numeric')
+                    elif 'diastolic' in vname:
+                        diastolic_val = vital.get('value_numeric')
+                
+                # Format BP reading with reference ranges
+                if systolic_val is not None or diastolic_val is not None:
+                    if systolic_val is not None and diastolic_val is not None:
+                        bp_reading = f"Blood Pressure: {systolic_val}/{diastolic_val} mmHg"
+                    elif systolic_val is not None:
+                        bp_reading = f"Blood Pressure (Systolic): {systolic_val} mmHg"
+                    else:
+                        bp_reading = f"Blood Pressure (Diastolic): {diastolic_val} mmHg"
+                    
+                    matches.append(bp_reading)
+                    
+                    # Add reference ranges (but only once, not duplicated)
+                    if query_type in ref_ranges:
+                        ref_info = ref_ranges[query_type]
+                        if isinstance(ref_info, tuple) and len(ref_info) >= 3:
+                            matches.append(f"  {ref_info[0]} {ref_info[2]}")
+                            matches.append(f"  {ref_info[1]} {ref_info[2]}")
+            else:
+                # First try to find in recent vitals (same date as most recent)
+                for vital in recent_vitals:
                     vname = vital.get('vital_name', vital.get('concept_name', '')).lower()
                     if any(term in vname for term in search_terms):
                         value = vital.get('value_numeric') or vital.get('value_text', 'N/A')
                         display_name = vital.get('vital_name', vital.get('concept_name', 'Unknown'))
-                        vital_date = vital.get('obs_datetime', '') or vital.get('date_recorded', '')
                         # Skip non-English duplicates
                         if all(ord(c) < 128 or c in '°²/' for c in display_name):
-                            matches.append(f"{display_name}: {value}")
-                            if vital_date:
-                                matches.append(f"  (Previous recording: {vital_date})")
-                        break  # Take only the first (most recent) match
+                            # Append reference range (Issue 7)
+                            if query_type in ref_ranges:
+                                ref_info = ref_ranges[query_type]
+                                if isinstance(ref_info, tuple) and len(ref_info) >= 2:
+                                    # Standard format: (min, max, unit)
+                                    ref_range = f"{ref_info[0]}-{ref_info[1]} {ref_info[2]}"
+                                    matches.append(f"{display_name}: {value} {ref_info[2]}  (Reference: {ref_range})")
+                                else:
+                                    matches.append(f"{display_name}: {value}")
+                            else:
+                                matches.append(f"{display_name}: {value}")
+            
+            # If not found in recent vitals, look for most recent historical value
+            if not matches:
+                if query_type == 'blood_pressure':
+                    systolic_val = None
+                    diastolic_val = None
+                    
+                    for vital in vitals_data:
+                        vname = vital.get('vital_name', vital.get('concept_name', '')).lower()
+                        if 'systolic' in vname:
+                            systolic_val = vital.get('value_numeric')
+                        elif 'diastolic' in vname:
+                            diastolic_val = vital.get('value_numeric')
+                    
+                    if systolic_val is not None or diastolic_val is not None:
+                        if systolic_val is not None and diastolic_val is not None:
+                            bp_reading = f"Blood Pressure: {systolic_val}/{diastolic_val} mmHg"
+                        elif systolic_val is not None:
+                            bp_reading = f"Blood Pressure (Systolic): {systolic_val} mmHg"
+                        else:
+                            bp_reading = f"Blood Pressure (Diastolic): {diastolic_val} mmHg"
+                        
+                        matches.append(bp_reading)
+                        if query_type in ref_ranges:
+                            ref_info = ref_ranges[query_type]
+                            if isinstance(ref_info, tuple) and len(ref_info) >= 3:
+                                matches.append(f"  {ref_info[0]} {ref_info[2]}")
+                                matches.append(f"  {ref_info[1]} {ref_info[2]}")
+                else:
+                    for vital in vitals_data:
+                        vname = vital.get('vital_name', vital.get('concept_name', '')).lower()
+                        if any(term in vname for term in search_terms):
+                            value = vital.get('value_numeric') or vital.get('value_text', 'N/A')
+                            display_name = vital.get('vital_name', vital.get('concept_name', 'Unknown'))
+                            vital_date = vital.get('obs_datetime', '') or vital.get('date_recorded', '')
+                            # Skip non-English duplicates
+                            if all(ord(c) < 128 or c in '°²/' for c in display_name):
+                                matches.append(f"{display_name}: {value}")
+                                if vital_date:
+                                    matches.append(f"  (Previous recording: {vital_date})")
+                            break  # Take only the first (most recent) match
             
             if matches:
                 result = "\n".join(matches)
@@ -1209,6 +1260,29 @@ class ClinicalChatbot:
         if keyword_found and user_type.upper() == "DOCTOR":
             logger.info(f"[CHANGE 6] Doctor query with keyword '{keyword_found}' - proceeding normally")
         
+        # 1.5. PRESCRIBE/SAFETY QUERY — allergy check ONLY (no dose calculation)
+        # Handle "can my child take...", "is it safe...", "can I give..." for patients
+        prescribe_keywords = ['take', 'safe', 'give', 'administer', 'can ', 'should ', 'ok to']
+        is_prescribe_query = any(kw in query_lower for kw in prescribe_keywords)
+        
+        drug_name_for_check = extract_drug_name(user_question)
+        if is_prescribe_query and not keyword_found and drug_name_for_check and patient_id:
+            logger.info(f"[PATIENT MED] Prescribe/safety query — running allergy check only for '{drug_name_for_check}'")
+            try:
+                allergy_fetcher = AllergyOpenMRSFetcher()
+                allergy_check = allergy_fetcher.check_drug_allergy(patient_id, drug_name_for_check)
+                allergy_fetcher.disconnect()
+                
+                self._ensure_patient_data(patient_id, context_data)
+                patient_name = self._get_patient_name(context_data)
+                response = AllergyResponsePatient.format_drug_allergy_check(
+                    drug_name_for_check, allergy_check, patient_id, patient_name
+                )
+                return self._build_result(user_type, "MEDICATION_QUERY", user_question, response,
+                                        ["Allergy Check + OpenMRS Records"], patient_id)
+            except Exception as e:
+                logger.error(f"[PATIENT MED] Allergy check error: {e}")
+        
         # 2. Drug information query (indications, contraindications, side effects, warnings, etc.)
         query_lower = user_question.lower()
         drug_info_keywords = ['indication', 'contraindication', 'warning', 'precaution',
@@ -1680,21 +1754,10 @@ class ClinicalChatbot:
                                 patient_name
                             )
                             
-                            # Add detailed dosage consultation note if this is a hybrid question 
+                            # Add brief dosage note if this is a hybrid question (avoid duplication)
                             if is_hybrid_question:
                                 dosage_note = (
-                                    "\n\n" + "="*70 + "\n"
-                                    "[ ABOUT THE DOSAGE/AMOUNT ]\n"
-                                    "="*70 + "\n"
-                                    "For the proper dosage of this medication, please consult your doctor or pharmacist.\n\n"
-                                    "They will determine the correct amount based on:\n"
-                                    "  - Your child's current age and weight\n"
-                                    "  - The specific medical condition being treated\n"
-                                    "  - Your child's other medications (drug interactions)\n"
-                                    "  - Any allergies or sensitivities your child has\n"
-                                    "  - Your child's kidney and liver function\n\n"
-                                    "DO NOT give medications without confirming the dose with your doctor or pharmacist.\n"
-                                    "Incorrect dosages can be dangerous."
+                                    "\n\n**DOSAGE NOTE:** For the correct dosage, please consult your doctor or pharmacist. They will determine the proper amount based on your child's age, weight, and medical condition."
                                 )
                                 response += dosage_note
                         else:
@@ -3080,17 +3143,19 @@ class ClinicalChatbot:
                         missed = immun_fetcher.get_missed_vaccines(patient_id)
                         history = immun_fetcher.get_immunization_history(patient_id)
                         
+                        # IMPORTANT: For next dose questions, ALWAYS include missed vaccines (vaccines that are due)
+                        # Even if asking_for_missed is False, missed vaccines represent the "next" vaccines to give
                         if user_type.lower() == "patient":
                             response = ImmunizationResponsePatient.format_next_scheduled_dose(
                                 next_scheduled=next_scheduled,
-                                missed_vaccines=missed if asking_for_missed else [],
+                                missed_vaccines=missed,  # Always include - shows what's due next
                                 patient_name=patient_name,
                                 age_info=age_info
                             )
                         else:  # Doctor
                             response = ImmunizationResponseDoctor.format_next_scheduled_dose(
                                 next_scheduled=next_scheduled,
-                                missed_vaccines=missed if asking_for_missed else [],
+                                missed_vaccines=missed,  # Always include - shows what's due next
                                 history=history,
                                 patient_id=patient_id,
                                 patient_name=patient_name,
@@ -3192,6 +3257,7 @@ class ClinicalChatbot:
                         logger.warning(f"Could not retrieve patient data for milestone: {e}")
             
             # Extract patient age from patient data
+            patient_age_months = None
             if context_data.get("patient_data"):
                 try:
                     patient_data = context_data["patient_data"]
@@ -3199,20 +3265,30 @@ class ClinicalChatbot:
                         p = patient_data["patient"]["data"][0]
                         birthdate = p.get('birthdate')
                         if birthdate:
-                            patient_age = self.response_agent.calculate_age_from_birthdate(birthdate)
-                            logger.info(f"Patient age calculated: {patient_age} years for milestone query")
+                            # Calculate age in MONTHS for milestone queries
+                            from dateutil.relativedelta import relativedelta
+                            if isinstance(birthdate, str):
+                                birthdate_obj = datetime.strptime(birthdate, '%Y-%m-%d').date()
+                            else:
+                                birthdate_obj = birthdate
+                            today = datetime.now().date()
+                            age_delta = relativedelta(today, birthdate_obj)
+                            patient_age_months = age_delta.years * 12 + age_delta.months
+                            patient_age = age_delta.years  # Keep years for display purposes
+                            logger.info(f"Patient age calculated: {patient_age} years ({patient_age_months} months) for milestone query")
                 except Exception as e:
                     logger.debug(f"Could not extract patient age: {e}")
             
             try:
-                # Enhanced query with patient age context if available
+                # Enhanced query with patient age context if available - use MONTHS for milestone lookup
                 enhanced_milestone_query = user_question
-                if patient_age is not None:
-                    enhanced_milestone_query = f"{user_question} (Patient age: {patient_age} years)"
+                if patient_age_months is not None:
+                    enhanced_milestone_query = f"{user_question} (Patient age: {patient_age_months} months)"
                 
                 milestone_results = self.mcp_agent.search_milestone(enhanced_milestone_query)
                 if milestone_results and milestone_results.get('count', 0) > 0:
                     milestone_results["patient_age"] = patient_age
+                    milestone_results["patient_age_months"] = patient_age_months  # Store months for display
                     context_data["mcp_data"]["milestones"] = milestone_results
                     context_data["sources"].append("Milestone Database")
                     if patient_age is not None:

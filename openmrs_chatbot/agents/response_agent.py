@@ -429,6 +429,9 @@ class ResponseAgent:
                 height_cm = None
                 weight_kg = None
                 bmi_found = False
+                systolic_bp = None
+                diastolic_bp = None
+                bp_datetime = None
                 
                 for vital in vitals_list:
                     vital_name = vital.get('vital_name', 'Unknown')
@@ -438,6 +441,23 @@ class ResponseAgent:
                         continue
                     
                     vital_key = vital_name.lower().strip()
+                    
+                    # Special handling for blood pressure - combine systolic and diastolic
+                    if 'systolic' in vital_key and vital.get('value_numeric'):
+                        systolic_bp = vital.get('value_numeric')
+                        bp_datetime = vital.get('obs_datetime', 'N/A')
+                        # Mark BP as seen so diastolic doesn't get added separately
+                        seen_vitals['blood pressure'] = True
+                        continue
+                    
+                    if 'diastolic' in vital_key and vital.get('value_numeric'):
+                        diastolic_bp = vital.get('value_numeric')
+                        if not bp_datetime:
+                            bp_datetime = vital.get('obs_datetime', 'N/A')
+                        # Mark BP as seen
+                        seen_vitals['blood pressure'] = True
+                        continue
+                    
                     if vital_key in seen_vitals:
                         continue
                     seen_vitals[vital_key] = True
@@ -469,6 +489,19 @@ class ResponseAgent:
                             vitals_text.append(f"  {vital_name}: {value_numeric} ({date})")
                         elif value_text:
                             vitals_text.append(f"  {vital_name}: {value_text} ({date})")
+                
+                # Add combined blood pressure reading if we have both systolic and diastolic
+                if systolic_bp is not None or diastolic_bp is not None:
+                    if systolic_bp is not None and diastolic_bp is not None:
+                        bp_reading = f"  Blood Pressure: {systolic_bp}/{diastolic_bp} mmHg ({bp_datetime})"
+                    elif systolic_bp is not None:
+                        bp_reading = f"  Blood Pressure (Systolic): {systolic_bp} mmHg ({bp_datetime})"
+                    else:
+                        bp_reading = f"  Blood Pressure (Diastolic): {diastolic_bp} mmHg ({bp_datetime})"
+                    
+                    if include_all or intent.get('vitals'):
+                        found_vitals = True
+                        vitals_text.append(bp_reading)
                 
                 # Calculate and add BMI if not found but we have height and weight
                 # And user is asking for vitals or specifically for BMI
@@ -903,6 +936,7 @@ Note: Always consult a healthcare professional for medical advice."""
         """Generate response for milestone queries with patient age context"""
         milestone_data = context_data.get("mcp_data", {}).get("milestones", {})
         patient_age = milestone_data.get("patient_age")
+        patient_age_months = milestone_data.get("patient_age_months")  # Get months for accurate display
         milestone_results = milestone_data.get("results", [])
         patient_data = context_data.get("patient_data", {})
         
@@ -931,19 +965,33 @@ Note: Always consult a healthcare professional for medical advice."""
         # Build response with patient context for doctors, patient-friendly for patients
         # Case-insensitive comparison for user_type
         if user_type and user_type.upper() == "DOCTOR":
+            # Display months for accurate age representation (esp. for infants under 1 year)
+            if patient_age_months is not None and patient_age_months < 12:
+                age_display = f"{patient_age_months} months"
+            else:
+                age_display = f"{patient_age} years" if patient_age else "unknown"
+                if patient_age_months:
+                    age_display += f" ({patient_age_months} months)"
+            
             response_text = f"""PATIENT: {patient_name}
-AGE: {patient_age} years ({patient_age * 12} months)
+AGE: {age_display}
 
 DEVELOPMENTAL MILESTONES:
 {milestone_text if milestone_text else "Limited milestone data available for this age group."}
 
 CLINICAL ASSESSMENT:
-Based on the patient's age ({patient_age} years), the milestones listed above are typical developmental expectations. Monitor for any significant delays or concerns in these areas during clinical assessment.
+Based on the patient's age ({age_display}), the milestones listed above are typical developmental expectations. Monitor for any significant delays or concerns in these areas during clinical assessment.
 """
         else:
+            # Display months for accurate age representation (esp. for infants under 1 year)
+            if patient_age_months is not None and patient_age_months < 12:
+                age_display_patient = f"{patient_age_months} months old"
+            else:
+                age_display_patient = f"{patient_age} years old" if patient_age else "this age"
+            
             response_text = f"""Hello {patient_name},
 
-Here are the developmental milestones you should be working towards at {patient_age} years old:
+Here are the developmental milestones you should be working towards at {age_display_patient}:
 {milestone_text if milestone_text else "Limited milestone data available for this age group."}
 
 TIPS FOR HEALTHY DEVELOPMENT:

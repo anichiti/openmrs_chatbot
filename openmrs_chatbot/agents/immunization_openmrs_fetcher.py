@@ -324,7 +324,9 @@ class ImmunizationOpenMRSFetcher:
                         'interval': vaccine.get('interval_between_doses'),
                         'description': vaccine.get('description'),
                         'side_effects': vaccine.get('side_effects', []),
-                        'contraindications': vaccine.get('contraindications', [])
+                        'contraindications': vaccine.get('contraindications', []),
+                        'type': vaccine.get('type', ''),
+                        'efficacy': vaccine.get('efficacy', {})
                     })
                     logger.info(f"[IMMUNIZATION] Recommending {vaccine_name} for age {age_months} months")
             
@@ -454,6 +456,10 @@ class ImmunizationOpenMRSFetcher:
                         'doses': vaccine.get('number_of_doses'),
                         'interval': vaccine.get('interval_between_doses'),
                         'description': vaccine.get('description'),
+                        'contraindications': vaccine.get('contraindications', []),
+                        'side_effects': vaccine.get('side_effects', []),
+                        'type': vaccine.get('type', ''),
+                        'efficacy': vaccine.get('efficacy', {}),
                         'is_overdue': True  # Mark as overdue since age has already passed
                     })
                     logger.info(f"[IMMUNIZATION] Missed vaccine: {vaccine_name} (overdue for age {age_months} months)")

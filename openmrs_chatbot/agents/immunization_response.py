@@ -98,16 +98,32 @@ class ImmunizationResponseDoctor:
         if recommendations:
             for i, rec in enumerate(recommendations, 1):
                 report += f"{i}. {rec.get('name', 'Unknown vaccine')}\n"
+                
+                # Vaccine type (e.g., "Live attenuated virus", "mRNA vaccine")
+                if rec.get('type'):
+                    report += f"   Type: {rec.get('type')}\n"
+                
                 report += f"   Recommended Age Group(s): {', '.join(rec.get('age_groups', []))}\n"
                 report += f"   Total Doses Required: {rec.get('doses', 'Not specified')}\n"
                 report += f"   Dosing Interval: {rec.get('interval', 'Not specified')}\n"
                 report += f"   Description: {rec.get('description', 'No description')}\n"
                 
+                # Contraindications - Important clinical information
                 if rec.get('contraindications'):
-                    report += f"   Contraindications: {', '.join(rec.get('contraindications', []))}\n"
+                    report += f"   ⚠️  CONTRAINDICATIONS: {', '.join(rec.get('contraindications', []))}\n"
                 
+                # Side effects
                 if rec.get('side_effects'):
-                    report += f"   Common Side Effects: {', '.join(rec.get('side_effects', []))}\n"
+                    report += f"   Expected Side Effects: {', '.join(rec.get('side_effects', []))}\n"
+                
+                # Efficacy data
+                if rec.get('efficacy') and isinstance(rec.get('efficacy'), dict):
+                    efficacy_items = rec.get('efficacy', {})
+                    if efficacy_items:
+                        report += f"   Efficacy: "
+                        efficacy_list = [f"{k}: {v}" for k, v in efficacy_items.items()]
+                        report += ", ".join(efficacy_list) + "\n"
+                
                 report += "\n"
         else:
             report += "All age-appropriate vaccines have been administered or patient is not yet at recommended age for additional vaccines.\n\n"
@@ -141,21 +157,43 @@ class ImmunizationResponseDoctor:
             report += f"Vaccine: {next_scheduled.get('vaccine_name', 'Unknown')}\n"
             report += f"Scheduled Date: {next_scheduled.get('next_dose_date', 'Not scheduled')}\n"
             report += f"Record Date: {next_scheduled.get('recorded_date', 'Unknown')}\n\n"
-        else:
-            report += "NO FUTURE DOSES SCHEDULED IN OPENMRS\n"
-            report += "Patient appears to be up to date with scheduled vaccinations.\n\n"
         
+        # Show recommended/due vaccines - these represent what should be given based on age
         if missed_vaccines:
             report += "-" * 80 + "\n"
-            report += "VACCINES DUE (Not Yet Administered):\n"
+            report += "VACCINES DUE (Age-appropriate, Not Yet Administered):\n"
             report += "-" * 80 + "\n"
             for i, vac in enumerate(missed_vaccines, 1):
                 report += f"\n{i}. {vac.get('name', 'Unknown vaccine')}\n"
+                
+                # Vaccine type
+                if vac.get('type'):
+                    report += f"   Type: {vac.get('type')}\n"
+                
                 report += f"   Recommended Age Groups: {', '.join(vac.get('age_groups', []))}\n"
+                report += f"   Doses Required: {vac.get('doses', 'Not specified')}\n"
+                report += f"   Interval: {vac.get('interval', 'Not specified')}\n"
                 report += f"   Description: {vac.get('description', 'N/A')}\n"
+                
+                # IMPORTANT: Contraindications - critical clinical information
                 if vac.get('contraindications'):
-                    report += f"   Contraindications: {', '.join(vac.get('contraindications', []))}\n"
-                report += "\n"
+                    report += f"   ⚠️  CONTRAINDICATIONS: {', '.join(vac.get('contraindications', []))}\n"
+                else:
+                    report += f"   Contraindications: None documented\n"
+                
+                # Side effects
+                if vac.get('side_effects'):
+                    report += f"   Expected Side Effects: {', '.join(vac.get('side_effects', []))}\n"
+                
+                # Efficacy
+                if vac.get('efficacy') and isinstance(vac.get('efficacy'), dict):
+                    efficacy_items = vac.get('efficacy', {})
+                    if efficacy_items:
+                        report += f"   Efficacy: "
+                        efficacy_list = [f"{k}: {v}" for k, v in efficacy_items.items()]
+                        report += ", ".join(efficacy_list) + "\n"
+        elif not next_scheduled:
+            report += "NO FUTURE DOSES SCHEDULED - Patient appears to be up to date with age-appropriate vaccinations.\n\n"
         
         if history:
             report += "-" * 80 + "\n"
@@ -170,9 +208,11 @@ class ImmunizationResponseDoctor:
         
         report += "-" * 80 + "\n"
         report += "RECOMMENDATIONS:\n"
-        report += "• Verify dates with official records\n"
-        report += "• Schedule overdue vaccinations immediately\n"
-        report += "• Document administration and lot numbers\n\n"
+        report += "• Verify immunization status meets vaccination schedule requirements\n"
+        report += "• Schedule due vaccines at next opportunity\n"
+        report += "• Screen for contraindications before administration\n"
+        report += "• Document vaccine lot numbers and administration sites\n"
+        report += "• Consider catch-up vaccination if behind schedule\n\n"
         report += "Source: OpenMRS Patient Record\n"
         
         return report
@@ -193,14 +233,33 @@ class ImmunizationResponseDoctor:
             report += "-" * 80 + "\n"
             for i, vac in enumerate(missed_vaccines, 1):
                 report += f"\n{i}. {vac.get('name', 'Unknown vaccine')}\n"
+                
+                # Vaccine type
+                if vac.get('type'):
+                    report += f"   Type: {vac.get('type')}\n"
+                
                 report += f"   Recommended Age Groups: {', '.join(vac.get('age_groups', []))}\n"
                 report += f"   Doses Required: {vac.get('doses', 'Not specified')}\n"
                 report += f"   Interval: {vac.get('interval', 'Not specified')}\n"
                 report += f"   Description: {vac.get('description', 'N/A')}\n"
+                
+                # IMPORTANT: Contraindications - critical clinical information
                 if vac.get('contraindications'):
-                    report += f"   Contraindications: {', '.join(vac.get('contraindications', []))}\n"
+                    report += f"   ⚠️  CONTRAINDICATIONS: {', '.join(vac.get('contraindications', []))}\n"
+                else:
+                    report += f"   Contraindications: None documented\n"
+                
+                # Side effects
                 if vac.get('side_effects'):
                     report += f"   Expected Side Effects: {', '.join(vac.get('side_effects', []))}\n"
+                
+                # Efficacy
+                if vac.get('efficacy') and isinstance(vac.get('efficacy'), dict):
+                    efficacy_items = vac.get('efficacy', {})
+                    if efficacy_items:
+                        report += f"   Efficacy: "
+                        efficacy_list = [f"{k}: {v}" for k, v in efficacy_items.items()]
+                        report += ", ".join(efficacy_list) + "\n"
         else:
             report += "Patient is up to date with all age-appropriate vaccines.\n\n"
         
@@ -305,9 +364,19 @@ class ImmunizationResponsePatient:
             report += f"Your child is due for {len(recommendations)} vaccine(s):\n\n"
             for i, rec in enumerate(recommendations, 1):
                 report += f"**{i}. {rec.get('name', 'Unknown vaccine')}**\n"
+                
+                # Vaccine type
+                if rec.get('type'):
+                    report += f"   Type: {rec.get('type')}\n"
+                
                 report += f"   What it protects against: {rec.get('description', 'Not specified')}\n"
                 report += f"   Number of doses needed: {rec.get('doses', 'Not specified')}\n"
                 report += f"   Interval between doses: {rec.get('interval', 'Not specified')}\n"
+                
+                # Contraindications - important for parents to know
+                if rec.get('contraindications'):
+                    contraindications = ', '.join(rec.get('contraindications', []))
+                    report += f"   ⚠️  Important: Tell your doctor if your child has: {contraindications}\n"
                 
                 if rec.get('side_effects'):
                     side_effects_text = ', '.join(rec.get('side_effects', [])[:3])
@@ -337,7 +406,7 @@ class ImmunizationResponsePatient:
         if patient_name:
             report += f"Patient: {patient_name}\n"
         if age_info:
-            report += f"Age: {age_info.get('years', 'N/A'):.1f} years\n"
+            report += f"Age: {age_info.get('years', 'N/A'):.1f} years ({age_info.get('months', 'N/A')} months)\n"
         
         report += "=" * 70 + "\n\n"
         
@@ -346,20 +415,51 @@ class ImmunizationResponsePatient:
             report += "-" * 70 + "\n"
             report += f"Vaccine: {next_scheduled.get('vaccine_name', 'Unknown')}\n"
             report += f"Scheduled Date: {next_scheduled.get('next_dose_date', 'Not scheduled')}\n\n"
-        else:
-            report += "**NO FUTURE DOSES SCHEDULED**\n"
-            report += "Your child appears to be up to date with scheduled vaccinations.\n\n"
         
+        # Show missed/due vaccines - these represent what's recommended next based on age
         if missed_vaccines:
             report += "-" * 70 + "\n"
-            report += f"**VACCINES DUE (MISSED):**\n"
+            report += f"**VACCINES YOUR CHILD IS DUE FOR (Age-Appropriate):**\n"
+            report += "-" * 70 + "\n"
             for i, vac in enumerate(missed_vaccines, 1):
-                report += f"\n{i}. {vac.get('name', 'Unknown vaccine')}\n"
-                report += f"   Description: {vac.get('description', 'N/A')}\n"
+                report += f"\n{i}. **{vac.get('name', 'Unknown vaccine')}**\n"
+                
+                # Vaccine type
+                if vac.get('type'):
+                    report += f"   Type: {vac.get('type')}\n"
+                
+                report += f"   Recommended Age: {', '.join(vac.get('age_groups', []))}\n"
+                report += f"   What it protects against: {vac.get('description', 'N/A')}\n"
+                
+                # Contraindications - important for parents to know
+                if vac.get('contraindications'):
+                    contraindications = ', '.join(vac.get('contraindications', []))
+                    report += f"   ⚠️  CONTRAINDICATIONS: {contraindications}\n"
+                    report += f"      (Tell your doctor if your child has any of these)\n"
+                
+                # Side effects
+                if vac.get('side_effects'):
+                    side_effects = ', '.join(vac.get('side_effects', [])[:3])
+                    report += f"   Common side effects: {side_effects}\n"
+                
+                # Efficacy - helpful for parents
+                if vac.get('efficacy') and isinstance(vac.get('efficacy'), dict):
+                    efficacy_items = vac.get('efficacy', {})
+                    if efficacy_items:
+                        efficacy_list = [f"{k}: {v}" for k, v in list(efficacy_items.items())[:2]]
+                        report += f"   Effectiveness: " + ", ".join(efficacy_list) + "\n"
             report += "\n"
+        elif not next_scheduled:
+            report += "**Your child appears to be up to date with vaccinations.**\n"
+            report += "Consult your pediatrician for the recommended vaccination schedule.\n\n"
         
         report += "-" * 70 + "\n"
-        report += "Please contact your healthcare provider to schedule these vaccines.\n"
+        report += "**What to Do Next:**\n"
+        report += "• Contact your healthcare provider to schedule these vaccines\n"
+        report += "• Bring your child's vaccination record to the appointment\n"
+        report += "• Ask about any vaccine reactions or side effects to expect\n"
+        report += "• Keep all vaccination records for school and travel requirements\n\n"
+        report += "Source: Your Medical Record\n"
         
         return report
     
@@ -380,10 +480,26 @@ class ImmunizationResponsePatient:
             report += "-" * 70 + "\n"
             for i, vac in enumerate(missed_vaccines, 1):
                 report += f"\n{i}. {vac.get('name', 'Unknown vaccine')}\n"
+                
+                # Vaccine type
+                if vac.get('type'):
+                    report += f"   Type: {vac.get('type')}\n"
+                
                 report += f"   Recommended Age: {', '.join(vac.get('age_groups', []))}\n"
+                report += f"   Doses Needed: {vac.get('doses', 'Not specified')}\n"
                 report += f"   Description: {vac.get('description', 'N/A')}\n"
+                
+                # Contraindications - very important for parents
+                if vac.get('contraindications'):
+                    contraindications = ', '.join(vac.get('contraindications', []))
+                    report += f"   ⚠️  CONTRAINDICATIONS: {contraindications}\n"
+                    report += f"      (Tell your doctor if your child has any of these)\n"
+                
+                # Side effects
                 if vac.get('side_effects'):
-                    report += f"   Common Side Effects: {', '.join(vac.get('side_effects', []))}\n"
+                    side_effects = ', '.join(vac.get('side_effects', []))
+                    report += f"   Common Side Effects: {side_effects}\n"
+                
                 report += "\n"
         else:
             report += "Your child is up to date with all age-appropriate vaccines!\n\n"

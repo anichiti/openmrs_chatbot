@@ -132,7 +132,8 @@ INTENT_KEYWORDS = {
             'allergic to', 'allergy to', 'allergies to',
             'can they take', 'can they use', 'can they take paracetamol',
             'safe medication', 'safe drug', 'contraindicated drug',
-            'avoid medication', 'avoid drug', 'which medication', 'which drug',
+            'avoid medication', 'avoid drug', 'avoid medicine', 'should avoid',
+            'should child avoid', 'medicines should avoid', 'which medication', 'which drug',
             'is it safe', 'is it safe to give', 'is it safe to take',
             'what medications can i', 'which medications can i', 'what drugs can i',
             'list the allergy', 'list the allergies', 'show allergy', 'show allergies'
