@@ -1949,19 +1949,13 @@ class ClinicalChatbot:
                     f"- Any symptoms experienced\n"
                 )
             else:
-                # Doctor query - provide clinical guidance
+                # Doctor query - direct action required
                 response = (
-                    f"**MEDICATION EMERGENCY - {emergency_type}**\n\n"
-                    "Clinical guidance for this emergency requires:\n"
-                    "1. Immediate patient assessment\n"
-                    "2. Specific medication details\n"
-                    "3. Patient's medical history and current vitals\n"
-                    "4. Contact regional Poison Control Center if needed\n\n"
-                    "Recommended actions:\n"
-                    "- Activated charcoal (if appropriate for the medication)\n"
-                    "- Supportive care and monitoring\n"
-                    "- Contact pharmaceutical company for specific antidotes if needed\n"
-                    "- Monitor for signs of toxicity\n"
+                    f"⚠️ **MEDICATION EMERGENCY - {emergency_type}**\n\n"
+                    "**CALL 911 FOR MEDICAL EMERGENCY**\n\n"
+                    "or\n\n"
+                    "**REACH OUT TO YOUR PRACTITIONER IMMEDIATELY**\n\n"
+                    "This situation requires direct medical intervention and cannot be managed through this system."
                 )
             
             result = {
