@@ -171,11 +171,16 @@ class ClinicalChatbot:
         NOTE: If intent is MEDICATION_QUERY, excludes weight/vitals since those are used
         for dose calculation in the medication handler, not direct data return.
         NOTE: VITALS_HISTORY_QUERY is NOT a direct query - it needs special history formatting.
+        NOTE: MEDICATION_EMERGENCY is NOT a direct query - it requires specialized emergency handler.
         """
         import re
         
         # EXCLUDE VITALS_HISTORY_QUERY: It should go to dedicated handler, not direct path
         if intent and intent.upper() == "VITALS_HISTORY_QUERY":
+            return False, None
+        
+        # EXCLUDE MEDICATION_EMERGENCY: It requires specialized emergency handler, not direct data return
+        if intent and intent.upper() == "MEDICATION_EMERGENCY":
             return False, None
         
         question_lower = user_question.lower().strip()
