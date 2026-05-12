@@ -87,7 +87,8 @@ class AllergyResponseDoctor:
         Returns:
             Formatted allergy report string
         """
-        report = f"ALLERGY PROFILE - PATIENT {patient_id}"
+        report = f"[CLINICAL REPORT - DOCTOR VIEW]\n"
+        report += f"ALLERGY PROFILE - PATIENT {patient_id}"
         if patient_name:
             report += f"\nPatient Name: {patient_name}"
         
@@ -250,7 +251,7 @@ class AllergyResponsePatient:
     @staticmethod
     def format_patient_allergies(allergies_by_type, patient_id, patient_name=None):
         """
-        Format all patient allergies for patient viewing (simple language)
+        Format all patient allergies for patient viewing (simple, conversational language)
         
         Args:
             allergies_by_type: Dict with allergen_type -> [allergens] mapping
@@ -260,42 +261,42 @@ class AllergyResponsePatient:
         Returns:
             Formatted allergy report string (patient-friendly)
         """
-        report = f"YOUR ALLERGIES\n"
-        report += f"{'='*70}\n\n"
-        
-        if not allergies_by_type:
-            report += "✓ No documented allergies on your medical record.\n\n"
-            report += "If you discover a new allergy, tell your doctor immediately.\n"
+        if not allergies_by_type or all(not v for v in allergies_by_type.values()):
+            # No allergies
+            report = "Great news! You don't have any documented allergies on your medical record.\n\n"
+            report += "If you find out you have a new allergy, make sure to tell your doctor right away."
         else:
             total_allergies = sum(len(v) for v in allergies_by_type.values())
+            
             if total_allergies == 1:
-                report += f"You have 1 documented allergy:\n\n"
+                report = "You have 1 allergy on your medical record:\n\n"
             else:
-                report += f"You have {total_allergies} documented allergies:\n\n"
+                report = f"You have {total_allergies} allergies on your medical record:\n\n"
             
             for allergen_type, allergens in allergies_by_type.items():
-                report += f"{allergen_type.upper() if allergen_type != 'DRUG' else 'Medications'}:\n"
-                report += "-" * 70 + "\n"
-                
-                for allergen in allergens:
-                    report += f"\n• {allergen['name']}"
-                    if allergen['severity']:
-                        report += f" (Severity: {allergen['severity']})"
+                if allergens:
+                    # Use simpler category names
+                    if allergen_type == 'DRUG':
+                        report += "Medicine Allergies:\n"
+                    elif allergen_type == 'FOOD':
+                        report += "Food Allergies:\n"
+                    else:
+                        report += "Environmental Allergies:\n"
+                    
+                    for allergen in allergens:
+                        report += f"  • {allergen['name']}"
+                        if allergen['severity']:
+                            report += f" ({allergen['severity']} severity)"
+                        report += "\n"
+                    
                     report += "\n"
-                    if allergen['comments']:
-                        report += f"  Note: {allergen['comments']}\n"
-                
-                report += "\n"
         
-        report += f"{'='*70}\n"
-        report += "IMPORTANT REMINDERS:\n"
-        report += "  • Carry your allergy information with you at all times\n"
-        report += "  • Tell every doctor/pharmacist about your allergies\n"
-        report += "  • Watch for allergic reactions after taking new medications\n"
-        report += "  • Report any new allergies to your doctor\n"
-        report += "  • In emergency situations, mention your allergies immediately\n\n"
-        report += "Questions? Consult your doctor or pharmacist.\n"
-        report += "Source: Your Medical Records\n"
+        # Simplified, conversational reminders
+        report += "Important things to remember:\n"
+        report += "  • Tell every new doctor or pharmacist about your allergies\n"
+        report += "  • Keep allergy information with you (wallet card or phone)\n"
+        report += "  • Watch for reactions like rash, swelling, or trouble breathing\n"
+        report += "  • Get emergency help right away if you think you're having an allergic reaction"
         
         return report
     

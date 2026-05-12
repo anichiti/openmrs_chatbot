@@ -1852,6 +1852,42 @@ class ClinicalChatbot:
                 except Exception as e:
                     logger.error(f"[ALLERGIES] Error processing allergy query: {e}")
                     # Fall through to general response
+            else:
+                # No patient_id provided - give general allergy information
+                logger.info(f"[ALLERGIES] General allergy question (no patient selected)")
+                response = (
+                    "**About Allergies**\n\n"
+                    "An allergy is an abnormal reaction of the immune system to a substance that's usually harmless to most people. "
+                    "Allergic reactions can range from mild to severe.\n\n"
+                    "**Common Types of Allergies:**\n"
+                    "• **Drug Allergies** - Reaction to medications (e.g., penicillin, amoxicillin)\n"
+                    "• **Food Allergies** - Reaction to certain foods (e.g., eggs, milk, peanuts, shellfish)\n"
+                    "• **Environmental Allergies** - Reaction to airborne substances (e.g., dust, pollen, latex)\n\n"
+                    "**Common Allergy Symptoms:**\n"
+                    "• Rash, hives, or itching\n"
+                    "• Swelling of face, lips, or throat\n"
+                    "• Difficulty breathing or wheezing\n"
+                    "• Nausea, vomiting, or diarrhea\n"
+                    "• Anaphylaxis (severe, life-threatening reaction)\n\n"
+                    "**What to Do:**\n"
+                    "1. If you suspect an allergy, consult your doctor\n"
+                    "2. Your doctor can perform allergy testing\n"
+                    "3. Always tell your healthcare provider about any known allergies\n"
+                    "4. For emergencies, call 911 or your local emergency number\n\n"
+                    "**To check a patient's allergies:** Please select a patient first, then ask about their allergies.\n"
+                )
+                result = {
+                    "timestamp": datetime.now().isoformat(),
+                    "user_type": user_type,
+                    "intent": "ALLERGY_QUERY",
+                    "question": user_question,
+                    "response": response,
+                    "sources": ["General Medical Knowledge"],
+                    "patient_id": None
+                }
+                self.save_response(result)
+                logger.info(f"[ALLERGIES] General allergy information provided")
+                return result
 
         # ====================================================================
         # MEDICATION_INFO_QUERY: "What medicine has been prescribed for my child?"
@@ -1999,7 +2035,7 @@ class ClinicalChatbot:
                     f"**⚠️ MEDICAL EMERGENCY - {emergency_type}**\n\n"
                     "This is a potentially serious situation that requires immediate professional help.\n\n"
                     "**PLEASE DO ONE OF THE FOLLOWING IMMEDIATELY:**\n"
-                    "1. **Call Emergency Services (Ambulance)** - Dial 108 or your local emergency number\n"
+                    "1. **Call Emergency Services (Ambulance)** - Dial 911 or your local emergency number\n"
                     "2. **Go to the Nearest Emergency Room**\n"
                     "3. **Call Poison Control Center** - If poisoning is suspected\n"
                     "4. **Contact Your Doctor Immediately**\n\n"

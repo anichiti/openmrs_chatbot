@@ -109,6 +109,8 @@ class IntentClassifier:
                 "George accidentally took too many of his tablets",
             ],
             "ALLERGY_QUERY": [
+                "Allergy",
+                "Allergies",
                 "Does the patient have any allergies?",
                 "What allergies are documented?",
                 "Can the patient take penicillin?",

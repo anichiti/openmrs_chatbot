@@ -481,10 +481,22 @@ Reply with ONLY the intent name, nothing else."""
             logger.info(f"Intent classification (safety override): IMMUNIZATION_QUERY")
             return "IMMUNIZATION_QUERY"
 
+        # OVERRIDE 2: Explicit allergy words → ALLERGY_QUERY (CHECK EARLY - BEFORE DRUG_INFO)
+        # This must be checked EARLY to catch simple "allergy" queries
+        # NOTE: 'contraindication' removed — now handled by OVERRIDE 1.5 for drug info queries
+        allergy_keywords = ['allergic', 'allergies', 'allergy', 'allergi', 'alergi', 'alerg',
+                           'anaphylaxis', 'anaphylactic',
+                           'allergy history', 'allergy profile', 'drug allergy', 'medication allergy',
+                           'has allergy', 'with allergy', 'any allergy', 'does the patient have allergy']
+        if any(kw in question_lower for kw in allergy_keywords):
+            logger.info(f"Intent classification (safety override): ALLERGY_QUERY (allergy keyword)")
+            return "ALLERGY_QUERY"
+
         # OVERRIDE 1.5: Drug property/information queries → MEDICATION_QUERY
         # Catches: "contraindications of paracetamol", "indications for ibuprofen",
         #          "side effects of rifampicin", "warnings for aspirin", etc.
         # These ask about DRUG PROPERTIES, not about a specific patient's allergy status.
+        # NOTE: ALLERGY_QUERY is checked BEFORE this to avoid misclassifying simple "allergy" questions
         drug_info_terms = ['contraindication', 'indication', 'precaution',
                           'warning', 'adverse effect', 'side effect', 'drug interaction',
                           'properties of', 'information about']
@@ -498,15 +510,6 @@ Reply with ONLY the intent name, nothing else."""
             if not is_patient_allergy:
                 logger.info(f"Intent classification (safety override): MEDICATION_QUERY (drug info)")
                 return "MEDICATION_QUERY"
-
-        # OVERRIDE 2: Explicit allergy words → ALLERGY_QUERY
-        # NOTE: 'contraindication' removed — now handled by OVERRIDE 1.5 for drug info queries
-        allergy_keywords = ['allergic', 'allergies', 'allergy', 'allergi', 'alergi', 'alerg',
-                           'anaphylaxis', 'anaphylactic',
-                           'allergy history', 'allergy profile', 'drug allergy', 'medication allergy']
-        if any(kw in question_lower for kw in allergy_keywords):
-            logger.info(f"Intent classification (safety override): ALLERGY_QUERY (allergy keyword)")
-            return "ALLERGY_QUERY"
 
         # OVERRIDE 3: Emergency keywords → MEDICATION_EMERGENCY_QUERY
         emergency_keywords = ['overdose', 'over dose', 'took too much', 'given too much',
