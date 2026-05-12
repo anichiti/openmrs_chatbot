@@ -523,26 +523,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **This is a research/educational project.** The chatbot is designed to assist healthcare professionals and should not replace professional medical advice. Always consult qualified healthcare providers for medical decisions.
 
-## 👥 Authors
-
-- [Your Name/Team] - Initial development
-
-## 🙏 Acknowledgments
-
-- OpenMRS community and documentation
-- Ollama and Llama 2 team
-- ChromaDB for vector database technology
-- Flask community
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Check existing documentation
-- Review workflow traces for debugging
-
----
-
-**Last Updated**: May 12, 2026  
-**Version**: 1.0.0  
-**Status**: Active Development
